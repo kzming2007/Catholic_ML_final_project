@@ -20,13 +20,13 @@
 ## 📂 Repository Structure
 ```text
 UR3_Cobot_ML/
-├── dataset/            # UCI UR3 CobotOps 원본 및 전처리된 데이터셋
+├── dataset/            # UCI UR3 CobotOps 원본 데이터셋
 ├── notebooks/          # Task별 모델링 및 시각화 주피터 노트북
 │   ├── 01_EDA.ipynb
 │   ├── 02_Regression/
 │   ├── 03_Classification/
 │   └── 04_Clustering/
-├── references/         # 논문, 레퍼런스 문서 및 API 가이드
+├── references/         # 논문, 레퍼런스 문서
 ├── reports/            # 최종 보고서 및 발표 자료 (PDF)
 ├── .gitignore
 └── README.md
