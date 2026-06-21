@@ -1,1 +1,1 @@
-# Catholic_ML_final_project
+# Catholic Machine Learning final project
