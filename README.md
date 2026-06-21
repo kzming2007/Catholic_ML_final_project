@@ -82,7 +82,7 @@ jupyter notebook notebooks/01_EDA.ipynb
 <br>
 
 ## 👥 Contributors
-| 이름 | 소속 | 역할 및 기여 |
+| 이름 | 소속 |
 |---|---|---|
 | **김택명** | 가톨릭대학교 인공지능학과 |
 | **남궁도현** | 가톨릭대학교 인공지능학과 |
