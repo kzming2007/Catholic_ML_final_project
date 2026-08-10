@@ -59,8 +59,8 @@ UR3_Cobot_ML/
 * **출처**: [UCI Machine Learning Repository - UR3 CobotOps Dataset](https://archive.ics.uci.edu/dataset/963/ur3+cobotops)
 * **특징**: 
   * 125Hz 실시간 샘플링
-  * 7,409행 × 24열 (관절 J0/~J5의 Current, Speed, Temperature 등)
-  * 다양한 하중(1/~3kg) 및 그리퍼 파지력(80/~120N) 조건에서의 픽앤플레이스 시나리오 기록
+  * 7,409행 × 24열 (관절 J0\~J5의 Current, Speed, Temperature 등)
+  * 다양한 하중(1\~3kg) 및 그리퍼 파지력(80\~120N) 조건에서의 픽앤플레이스 시나리오 기록
 
 <br>
 
