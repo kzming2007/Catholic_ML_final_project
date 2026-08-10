@@ -1,0 +1,4 @@
+﻿target,window_size_raw_cycle,prediction_horizon_raw_cycle,positive_recall_raw_cycle,positive_precision_raw_cycle,positive_f1_raw_cycle,pr_auc_raw_cycle,window_size_cycle_run,prediction_horizon_cycle_run,positive_recall_cycle_run,positive_precision_cycle_run,positive_f1_cycle_run,pr_auc_cycle_run
+GripLost,5,3,0.3333333333333333,0.6363636363636364,0.4375,0.5105650953766749,5,3,0.1666666666666666,1.0,0.2857142857142857,0.5099134827141464
+ProtectiveStop,10,3,0.3333333333333333,1.0,0.5,0.5078945742182672,5,10,0.0869565217391304,1.0,0.16,0.2124300811069271
+System_Failure,5,10,0.0425531914893617,0.25,0.0727272727272727,0.2799509017119347,5,10,0.12,0.4285714285714285,0.1875,0.3286569766364008

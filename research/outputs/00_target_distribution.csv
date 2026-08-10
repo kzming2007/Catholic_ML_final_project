@@ -1,0 +1,9 @@
+﻿target,value,count,ratio_percent
+System_Failure,0.0,6837,92.28
+System_Failure,1.0,518,6.991
+System_Failure,,54,0.729
+ProtectiveStop,False,7077,95.519
+ProtectiveStop,True,278,3.752
+ProtectiveStop,,54,0.729
+GripLost,False,7166,96.72
+GripLost,True,243,3.28

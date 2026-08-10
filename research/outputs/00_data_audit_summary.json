@@ -1,0 +1,43 @@
+{
+  "generated_at": "2026-07-08T16:26:25",
+  "dataset_path": "C:\\Users\\PC-001\\Desktop\\ML 프로젝트\\UR3_Cobot_ML\\dataset\\ur3_cobotops.csv",
+  "shape": {
+    "rows": 7409,
+    "columns": 34
+  },
+  "raw_columns": [
+    "Num",
+    "Timestamp",
+    "Current_J0",
+    "Temperature_J0",
+    "Current_J1",
+    "Temperature_J1",
+    "Current_J2",
+    "Temperature_J2",
+    "Current_J3",
+    "Temperature_J3",
+    "Current_J4",
+    "Temperature_J4",
+    "Current_J5",
+    "Temperature_J5",
+    "Speed_J0",
+    "Speed_J1",
+    "Speed_J2",
+    "Speed_J3",
+    "Speed_J4",
+    "Speed_J5",
+    "Tool_current",
+    "cycle",
+    "Robot_ProtectiveStop",
+    "grip_lost"
+  ],
+  "clean_row_count_if_dropna_all": 7355,
+  "cycle_count": 240,
+  "cycle_min": 1,
+  "cycle_max": 264,
+  "notes": [
+    "System_Failure is defined as ProtectiveStop OR GripLost.",
+    "Rows with missing ProtectiveStop are excluded from model training.",
+    "The process hyperparameters in the source paper are not present as dataset columns."
+  ]
+}
