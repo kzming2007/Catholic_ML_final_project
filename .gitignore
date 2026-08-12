@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Rebuildable sequence-model intermediates
+research/.sequence_cache/

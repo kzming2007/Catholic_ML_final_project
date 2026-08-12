@@ -4,7 +4,7 @@
 **산업용 협동로봇(UR3) 내부 센서 데이터를 활용한 가상 센싱 및 고장 예측 모델링**<br>
 *Catholic University Machine Learning Final Project (2026)*
 
-[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.12-tested-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.2+-orange.svg?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -28,6 +28,7 @@ UR3_Cobot_ML/
 │   └── 04_Clustering/
 ├── references/         # 논문, 레퍼런스 문서
 ├── reports/            # 최종 보고서 및 발표 자료 (PDF)
+├── research/           # cycle-aware 재검증 및 시계열 모델 비교
 ├── .gitignore
 └── README.md
 ```
@@ -56,11 +57,17 @@ UR3_Cobot_ML/
 <br>
 
 ## 📊 Dataset Description
-* **출처**: [UCI Machine Learning Repository - UR3 CobotOps Dataset](https://archive.ics.uci.edu/dataset/963/ur3+cobotops)
+* **출처**: [UCI Machine Learning Repository - UR3 CobotOps Dataset](https://archive.ics.uci.edu/dataset/963/ur3+cobotops), DOI `10.24432/C5J891`, 데이터 라이선스 `CC BY 4.0`
 * **특징**: 
-  * 125Hz 실시간 샘플링
+  * RTDE 인터페이스는 125 Hz로 동작하지만, 공개 CSV의 양수 Timestamp 간격 중앙값은 약 1.005초이므로 저장 데이터를 125 Hz 균일 시계열로 간주하지 않음
   * 7,409행 × 24열 (관절 J0\~J5의 Current, Speed, Temperature 등)
   * 다양한 하중(1\~3kg) 및 그리퍼 파지력(80\~120N) 조건에서의 픽앤플레이스 시나리오 기록
+
+## 🔬 Research Extension
+
+후속 연구에서는 비연속적으로 재등장하는 cycle ID를 `cycle_run`으로 분리하고, 10-step 구간과 9개 acquisition block held-out 평가를 고정했습니다. 같은 구간을 통계 feature로 요약한 `SMOTE + Random Forest`와 raw sequence를 입력받는 소형 1D CNN·LSTM을 비교한 결과, deep learning 모델은 높은 event recall을 보였지만 정상 cycle 오경보가 더 많았습니다. 현재 공개 데이터 범위에서는 Random Forest가 더 균형 잡힌 기준선입니다.
+
+세부 설계, 재현 명령, 결과 해석은 `research/README.md`와 `research/outputs/10_sequence_model_comparison.md`에 기록되어 있습니다.
 
 <br>
 
@@ -71,13 +78,13 @@ UR3_Cobot_ML/
 git clone https://github.com/kzming2007/UR3_Cobot_ML.git
 cd UR3_Cobot_ML
 
-# 2. 필수 라이브러리 설치
-pip install -r requirements.txt
+# 2. 연구 스크립트용 검증 환경 설치
+python -m pip install -r research/requirements.txt
 
-# 3. 노트북 실행
-jupyter notebook notebooks/01_EDA.ipynb
+# 3. 기존 노트북 실행 시 Jupyter와 시각화 패키지 추가 설치
+python -m pip install jupyter matplotlib seaborn scipy statsmodels
+jupyter notebook notebooks/01_basic_EDA.ipynb
 ```
-*(참고: `requirements.txt`가 없다면 scikit-learn, pandas, numpy, seaborn, imbalanced-learn 등이 필요합니다.)*
 
 <br>
 

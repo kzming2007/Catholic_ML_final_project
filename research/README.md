@@ -15,6 +15,7 @@
 ## 확정 범위
 
 - 포함: 공개 `ur3_cobotops.csv`, `System_Failure`, `ProtectiveStop`, `GripLost`, `Random Forest`, `SMOTE + Random Forest`, cycle-aware split, window feature baseline.
+- 포함: 고정 10-step raw sequence를 입력으로 사용하는 소형 1D CNN과 단층 LSTM 비교.
 - 제외: 공개 CSV에 없는 `workload`, `movement speed`, `gripping force`를 직접 feature처럼 해석하는 분석, 실제 로봇팔 제어 시스템 구현, 원본 데이터의 Obsidian Vault 복사.
 
 ## 현재 파일
@@ -29,21 +30,26 @@
 - `06_process_condition_separability.py`: 공정조건 3개 수준의 latent cluster 및 25-cycle 후보 블록 분리 가능성 진단
 - `07_cycle_run_revalidation.py`: raw cycle 경계 결과와 cycle_run 수정 결과 비교
 - `08_block_held_out_robustness.py`: 25-cycle acquisition block held-out 구간 이상탐지 강건성 검증
+- `09_event_level_block_validation.py`: 공통 10-step·동일 block 분할의 사건 단위 탐지율과 정상 cycle 오경보 검증
+- `10_prepare_sequence_data.py`: 기존 `09`와 동일한 10-step window를 10×26 raw sequence로 준비하고 정합성 검증
+- `10_torch_sequence_models.py`: 외부 PyTorch 환경에서 고정 1D CNN/LSTM을 block-held-out 방식으로 학습
+- `10_sequence_model_results.py`: Random Forest와 sequence model의 window·event·오경보 지표 비교
+- `requirements.txt`: 연구 스크립트를 실제 실행한 Python 패키지 버전
 - `EXPERIMENT_LOG.md`: 실제 실행한 실험의 시간순 기록
 - `outputs/`: 실행 결과 CSV/Markdown 저장 위치
 
 ## 현재 상태
 
-- 기준일: 2026-08-10
-- 완료: 데이터 감사, row-level baseline 재현, cycle_run 내부 window baseline, pre-failure baseline, 반복 split·threshold 검증, 공정조건 분리 가능성 진단, cycle_run 경계 재검증, acquisition block held-out 강건성 검증.
-- 진행 중: block-held-out 결과를 주 결과로 고정하고 동일 분할에서 딥러닝 비교 범위를 설계하는 단계.
+- 기준일: 2026-08-12
+- 완료: 데이터 감사, row-level baseline 재현, cycle_run 내부 window baseline, pre-failure baseline, 반복 split·threshold 검증, 공정조건 분리 가능성 진단, cycle_run 경계 재검증, acquisition block held-out 강건성 검증, 공통 10-step 사건 단위 기준선 검증, 고정 1D CNN/LSTM 비교.
+- 현재 결론: 1D CNN과 LSTM은 높은 event cycle recall을 보였지만 정상 cycle 오경보가 크게 증가했다. 세 target 모두에서 Random Forest가 pooled window positive F1, PR-AUC, 정상 cycle 오경보율을 기준으로 더 균형 잡힌 결과를 보였다.
 - 막힌 점: 실제 공정조건 분류는 cycle-to-condition 정답표가 없어 검증할 수 없다. 이 제약은 시계열 이상탐지 연구 진행을 막지는 않는다.
 
 ## 다음 작업
 
-1. 구간 단위 이상탐지는 `08` block-held-out 결과를 주 결과로 사용한다.
-2. pre-failure 결과(`03`-`05`)는 `GripLost`의 약한 사전 신호와 한계 분석으로 제한한다.
-3. 딥러닝 비교는 `cycle_run` 경계와 동일 acquisition block held-out 분할을 고정한 뒤 수행한다.
+1. 구간 단위 이상탐지는 `09`와 `10`의 결과를 근거로 Random Forest를 고정 기준선으로 유지한다.
+2. 딥러닝 후속 검증이 필요하면 모델 규모를 늘리기 전에 오류가 집중된 held-out block과 정상 cycle false alarm 구간을 분석한다.
+3. pre-failure 결과(`03`-`05`)는 `GripLost`의 약한 사전 신호와 한계 분석으로 제한한다.
 
 ## 실행 순서
 
@@ -57,7 +63,23 @@ python -X utf8 research\05_pre_failure_threshold_sensitivity.py
 python -X utf8 research\06_process_condition_separability.py
 python -X utf8 research\07_cycle_run_revalidation.py
 python -X utf8 research\08_block_held_out_robustness.py
+python -X utf8 research\09_event_level_block_validation.py
+python -X utf8 research\10_prepare_sequence_data.py
+& "D:\Projects\Cube_Codex\.venvs\sam2_clean\Scripts\python.exe" -X utf8 research\10_torch_sequence_models.py --manifest research\.sequence_cache\10_sequence_manifest.json --output-dir research\outputs --device cuda
+python -X utf8 research\10_sequence_model_results.py
 ```
+
+## 데이터 provenance 및 실행 환경
+
+- 공식 출처: UCI Machine Learning Repository, UR3 CobotOps, DOI `10.24432/C5J891`, 데이터 라이선스 `CC BY 4.0`.
+- `dataset/ur3_cobotops.csv` SHA-256: `C789CDA10ACB354A7C1689F617D94A5F39A93FD8CB6C004AD16D36CEA55A74A3`.
+- `dataset/dataset_02052023.xlsx` SHA-256: `F0F10917DE9056908A82CEC1AA459DDF9DA2D2DB70D269B128F99241C8796091`.
+- CSV와 Excel은 7,409행 × 24열 구조가 같고, 수치 차이는 최대 약 `4.4e-8`로 반올림 수준이다.
+- IF-FCM 참고 논문 DOI: `10.1007/978-3-031-63851-0_6`.
+- `09` 검증 환경: Python 3.12.3, NumPy 2.4.3, pandas 3.0.3, scikit-learn 1.8.0, imbalanced-learn 0.14.1, openpyxl 3.1.5.
+- `10` sequence model 환경: `D:\Projects\Cube_Codex\.venvs\sam2_clean`, Python 3.12.3, PyTorch 2.7.1+cu128, CUDA 12.8, NVIDIA GeForce RTX 3060 Ti. 기존 환경의 패키지는 변경하지 않았다.
+- `research/requirements.txt`는 데이터 준비와 결과 집계 환경을 기록하며 PyTorch는 위 외부 환경에서 재사용한다.
+- 논문의 RTDE 125 Hz 설명은 인터페이스 동작 주파수이며, 공개 CSV의 양수 Timestamp 간격 중앙값은 약 1.005초다. Window 크기는 초가 아니라 step으로 해석한다.
 
 ## 현재 연구상 주의점
 
@@ -73,19 +95,25 @@ python -X utf8 research\08_block_held_out_robustness.py
 - `04` 반복 split 기준으로 `GripLost`는 positive를 잡는 결과가 상대적으로 안정적이고, `ProtectiveStop`과 `System_Failure`는 해석에 더 주의가 필요하다.
 - `05` threshold 조정은 recall 개선 가능성을 보지만, false positive 부담이 함께 증가하므로 최종 성능 주장으로 바로 쓰지 않는다.
 - `08`은 구간 단위 이상탐지에서 9개 acquisition block 모두 positive를 잡았지만, 이미 이상이 포함된 window 탐지이므로 pre-failure 결과로 해석하지 않는다.
+- `09`의 event cycle 탐지는 실제 positive가 포함된 window에서의 탐지 여부이며, 고장 전 경고 성능이 아니다.
+- `09`의 정상 cycle 오경보율은 겹치는 window의 false positive가 cycle 단위 경보로 누적되는 운영상 부담을 나타낸다.
 - temperature 제거는 `System_Failure`에서 개선됐지만 target별 효과가 일관되지는 않아 ablation 결과를 함께 보고한다.
+- `10`의 Random Forest는 10-step을 182개 통계 feature로 요약하고, 1D CNN/LSTM은 같은 구간을 10×26 순서 입력으로 사용한다.
+- `10`의 deep learning 결과는 seed 3개 평균이며, Random Forest는 `09`의 고정 1회 prediction을 재사용한다.
+- `10`의 window 지표는 seed별 9개 held-out prediction을 합친 pooled 지표라서, `09` 보고서의 block별 평균과 숫자가 직접 같지는 않다.
 
 ## 근거
 
 - 코드 및 데이터: `dataset/ur3_cobotops.csv`, `research/common.py`, `research/00_data_audit.py`, `research/01_baseline_reproduction.py`, `research/02_window_feature_baseline.py`, `research/03_pre_failure_window_baseline.py`
 - 결과물: `research/outputs/00_data_audit_report.md`, `research/outputs/01_baseline_results.md`, `research/outputs/02_window_feature_results.md`, `research/outputs/03_pre_failure_window_results.md`, `research/outputs/04_pre_failure_repeated_split_results.md`, `research/outputs/05_pre_failure_threshold_sensitivity_results.md`
 - 공정조건 진단: `research/outputs/06_process_condition_separability.md`, `research/outputs/06_condition_cluster_summary.csv`, `research/outputs/06_condition_block_classification.csv`
-- 경계·강건성 검증: `research/outputs/07_cycle_run_revalidation.md`, `research/outputs/08_block_held_out_robustness.md`
+- 경계·강건성 검증: `research/outputs/07_cycle_run_revalidation.md`, `research/outputs/08_block_held_out_robustness.md`, `research/outputs/09_event_level_block_validation.md`
+- Sequence model 비교: `research/outputs/10_sequence_model_comparison.md`, `research/outputs/10_sequence_model_summary.csv`, `research/outputs/10_sequence_block_results.csv`, `research/outputs/10_sequence_window_predictions.csv`
 - 관련 메모: `research/2026-07-08_time_series_method_decision.md`
 
 ## 열린 질문
 
-- 딥러닝 비교에서 10-step 공통 window를 쓸지, target별 대표 window를 쓸지 정해야 한다.
+- 딥러닝 오류 분석을 후속 최소 검증으로 수행할지 결정해야 한다. 추가 architecture 탐색은 그 이후에 판단한다.
 - `GripLost` pre-failure threshold 0.30을 후속 검증 후보로 유지할지 정해야 한다.
 - 공정조건 분류는 대응표를 확보하지 않는 한 연구 범위에 포함하지 않는다.
 
@@ -95,3 +123,5 @@ python -X utf8 research\08_block_held_out_robustness.py
 - 2026-07-22: 반복 split 검증(`04`)과 threshold 민감도 검증(`05`) 결과를 반영했다.
 - 2026-08-10: 공정조건 분리 가능성 진단(`06`)과 raw `cycle` ID 재등장 문제를 반영했다.
 - 2026-08-10: `cycle_run` 기준으로 `02`-`05`를 재실행하고 경계 재검증(`07`)과 acquisition block held-out 검증(`08`)을 반영했다.
+- 2026-08-12: 공통 10-step 사건 단위 검증(`09`)을 반영하고 데이터 provenance와 실행 환경을 기록했다.
+- 2026-08-12: 외부 PyTorch 환경을 변경 없이 재사용해 고정 1D CNN/LSTM 비교(`10`)를 완료하고 결과와 한계를 반영했다.

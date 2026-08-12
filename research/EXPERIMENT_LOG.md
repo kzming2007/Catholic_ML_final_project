@@ -116,6 +116,34 @@
 - 다음 실험: 동일 `cycle_run` 경계와 block-held-out 분할을 고정해 window feature와 sequence model을 비교한다.
 - 관련 파일: `research/outputs/08_block_held_out_robustness.md`, `research/outputs/08_block_held_out_summary.csv`, `research/outputs/08_block_held_out_best.csv`
 
+### 2026-08-12 - 09 공통 10-step 사건 단위 block-held-out 검증
+
+- 질문: 딥러닝 비교 전에 10-step과 동일 후보 block 분할을 고정했을 때, Random Forest가 실제 이상 event cycle을 얼마나 탐지하고 정상 cycle에서 얼마나 오경보를 내는가?
+- 데이터 및 입력: `cycle_run` 경계의 10-step window, 후보 block 1, 2, 3, 4, 5, 7, 8, 9, 10, 전체 sensor 및 temperature 제거 feature.
+- 실행 조건: `python -X utf8 research\09_event_level_block_validation.py`, `SMOTE + Random Forest`, 300 trees, positive decision rule `score > 0.50`.
+- 방법: 각 block을 한 번씩 test로 두고 나머지 8개 block만 학습했다. 실제 positive가 포함된 window를 하나 이상 맞힌 event cycle을 탐지로 계산하고, 정상 cycle에서 positive 예측이 하나라도 발생하면 cycle 오경보로 계산했다. 모든 window score와 cycle별 집계 결과를 저장했다.
+- 결과: 전체 sensor 기준 `System_Failure`는 event cycle 87/87 탐지, 정상 cycle 오경보율 0.0522였다. `ProtectiveStop`은 59/62 탐지와 오경보율 0.0429, `GripLost`는 37/39 탐지와 오경보율 0.0429였다. 가장 어려운 block의 event recall은 각각 1.0, 0.5, 0.6667이었다.
+- Temperature ablation: temperature 제거 시 `System_Failure` window positive F1은 0.7451에서 0.7839로 증가했지만 정상 cycle 오경보율도 0.0522에서 0.0783으로 증가했다. `ProtectiveStop`과 `GripLost`에서도 오경보율이 증가해 전체 sensor를 주 설정으로 유지한다.
+- 정합성 검증: 54개 block 결과의 window-level Macro F1, positive recall, positive F1, PR-AUC가 기존 `08`의 동일 10-step 결과와 모두 일치했다. 저장된 24,210개 window 예측에서 summary를 재집계한 결과도 원본 summary와 일치했다.
+- 해석: 구간 단위 이상탐지는 사건 단위에서도 높은 탐지율을 보이지만 `ProtectiveStop`과 `GripLost`는 특정 block에서 누락이 남는다. 이 결과는 이상이 포함된 window 탐지이며 고장 발생 전 예측으로 해석하지 않는다.
+- 한계 또는 오류: 첫 실행은 120초 제한으로 종료되어 결과가 저장되지 않았다. 동일한 300-tree 설정으로 실행 시간을 늘려 134.6초에 완료했으며, 0.5 동률 처리 차이를 발견해 기존 `RandomForest.predict()`와 같도록 `score > 0.50`으로 저장 score를 재집계했다.
+- 다음 실험: 전체 sensor, 10-step, 동일 9개 block, 동일 사건 단위 지표를 고정해 1D CNN과 LSTM을 비교한다.
+- 관련 파일: `research/outputs/09_event_level_block_validation.md`, `research/outputs/09_event_level_block_summary.csv`, `research/outputs/09_event_level_cycle_results.csv`, `research/outputs/09_event_level_window_predictions.csv`
+
+### 2026-08-12 - 10 고정 1D CNN/LSTM sequence model 비교
+
+- 질문: 동일한 10-step 구간에서 step 순서를 직접 입력받는 소형 1D CNN과 LSTM이 통계적 window feature 기반 Random Forest보다 이상 event를 안정적으로 탐지하는가?
+- 데이터 및 입력: `cycle_run` 경계를 넘지 않는 10-step×26-feature raw sequence, target `System_Failure`, `ProtectiveStop`, `GripLost`, 후보 block 1, 2, 3, 4, 5, 7, 8, 9, 10.
+- 실행 조건: 데이터 준비와 집계는 프로젝트 Python 환경을 사용했다. 학습은 기존 `D:\Projects\Cube_Codex\.venvs\sam2_clean` 환경의 Python 3.12.3, PyTorch 2.7.1+cu128, CUDA 12.8, NVIDIA GeForce RTX 3060 Ti를 패키지 변경 없이 재사용했다.
+- 방법: 각 block을 한 번씩 test로 두고, 다음 순서의 outer-train block 1개를 validation으로 사용해 epoch를 선택했다. 선택된 epoch로 test block을 제외한 8개 block 전체를 재학습했다. 고정 소형 1D CNN과 단층 LSTM에 class-weighted BCE, Adam, threshold `score > 0.50`, seed 42/43/44를 적용했다.
+- 실행 범위: 3 targets×2 models×9 test blocks×3 seeds의 162회 학습과 72,630개 window prediction을 완료했다. 각 target/model/seed 조합은 9개 test block과 4,035개 window를 모두 포함했고, test/validation block 분리와 threshold 규칙을 검증했다. 기록된 개별 학습 시간의 합은 486.7초였다.
+- 결과: `System_Failure`의 event recall/정상 cycle 오경보율은 1D CNN 0.9732/0.1594, LSTM 0.9617/0.2058, Random Forest 1.0000/0.0522였다. `ProtectiveStop`은 각각 0.9355/0.2024, 0.9086/0.2119, 0.9516/0.0429였고, `GripLost`는 0.9487/0.3252, 0.9487/0.3763, 0.9487/0.0429였다.
+- Window 결과: pooled positive F1 기준 `System_Failure`는 1D CNN 0.7097, LSTM 0.6749, Random Forest 0.7326이었다. `ProtectiveStop`은 0.6769, 0.6953, 0.7861이었고, `GripLost`는 0.5451, 0.5302, 0.6328이었다. PR-AUC도 세 target 모두 Random Forest가 가장 높았다.
+- 해석: 소형 sequence model도 event cycle 대부분을 탐지했지만 정상 cycle에서 경보가 누적됐다. 현재 데이터 규모와 고정 block 평가에서는 짧은 시계열 구간을 통계량으로 정제한 Random Forest가 더 균형 잡힌 기준선이다. 딥러닝 사용 자체가 성능 향상을 보장하지 않는다는 비교 결과로 해석한다.
+- 한계 또는 오류: window 안에 이미 positive 상태가 포함될 수 있어 pre-failure 예측 결과가 아니다. 후보 block은 실제 공정조건 라벨이 아니라 cycle 번호 기반 proxy다. Random Forest는 고정 1회, deep learning은 3개 seed 평균이며, architecture 탐색은 수행하지 않았다.
+- 다음 실험: 추가 모델을 바로 늘리지 않고 false alarm이 집중된 정상 cycle과 성능이 낮은 held-out block을 먼저 분석할지 결정한다.
+- 관련 파일: `research/10_prepare_sequence_data.py`, `research/10_torch_sequence_models.py`, `research/10_sequence_model_results.py`, `research/outputs/10_sequence_model_comparison.md`, `research/outputs/10_sequence_model_summary.csv`, `research/outputs/10_sequence_training_runs.csv`
+
 ## 공통 기준
 
 - 재현에 필요한 경로, 스크립트 버전, 주요 파라미터를 남긴다.
