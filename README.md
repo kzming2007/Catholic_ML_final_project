@@ -2,7 +2,7 @@
   
 # 🤖 UR3 CobotOps Machine Learning Project
 **산업용 협동로봇(UR3) 내부 센서 데이터를 활용한 가상 센싱 및 고장 예측 모델링**<br>
-*Catholic University Machine Learning Final Project (2025)*
+*Catholic University Machine Learning Final Project (2026)*
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.2+-orange.svg?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
