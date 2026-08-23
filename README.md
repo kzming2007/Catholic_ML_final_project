@@ -71,7 +71,9 @@ Random Forest의 event cycle recall은 `System_Failure` 0.9770, `ProtectiveStop`
 
 이 결과는 이상이 이미 포함된 구간의 탐지이며 조기 고장 예측을 뜻하지 않습니다. First positive 이전만 사용한 별도 실험에서는 `GripLost`의 약한 사전 신호 가능성만 확인됐습니다.
 
-기존 프로젝트와 연구 확장의 차이, 얻은 결과, 한계는 [연구 종합 문서](research/2026-08-23_project_to_research_synthesis.md)에 정리했습니다. 재현 명령과 현재 상태는 [연구 README](research/README.md), 동일 센서 비교 결과는 [최종 비교 결과](research/outputs/12_matched_lstm_autoencoder_comparison.md)에서 확인할 수 있습니다.
+사전 고정한 센서 그룹 ablation에서는 전류 계열 제거가 `System_Failure`와 `GripLost`의 event recall을 낮췄지만, `ProtectiveStop`에서는 recall 증가와 오경보 증가가 함께 나타났습니다. `Tool_current` 제거는 `System_Failure`와 `ProtectiveStop`에서 오히려 개선됐습니다. 따라서 관절 전류 특징의 예측 기여는 지지되지만, 모든 전류 센서가 항상 핵심이거나 고장의 원인이라는 주장은 지지되지 않습니다.
+
+기존 프로젝트와 연구 확장의 차이, 얻은 결과, 한계는 [연구 종합 문서](research/2026-08-23_project_to_research_synthesis.md)에 정리했습니다. 재현 명령과 현재 상태는 [연구 README](research/README.md), 동일 센서 비교 결과는 [최종 비교 결과](research/outputs/12_matched_lstm_autoencoder_comparison.md), 센서별 해석 근거는 [센서 그룹 ablation 결과](research/outputs/14_sensor_group_ablation.md)에서 확인할 수 있습니다.
 
 <br>
 

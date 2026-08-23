@@ -122,6 +122,18 @@ Cycle-group 기준 `SMOTE + Random Forest` 비교 결과는 다음과 같다.
 
 오경보 window에서는 일부 전류·속도·온도·`Tool_current`의 수준 또는 변화 범위 차이가 반복됐다. 그러나 겹치는 window의 사후 기술통계이며 모델별 오류에 선택된 표본이다. 이를 feature importance, 통계적 독립 표본 검정, 물리적 인과관계로 확대하지 않는다.
 
+### 4.7 센서 그룹 ablation은 전류 중심 결론을 좁혔다
+
+결과 확인 전에 센서 그룹 10개 변형과 해석 규칙을 고정하고, 동일한 10-step·9-block·Random Forest 조건에서 270회 평가했다. `all_19` 결과는 기존 `12` 기준선의 score와 prediction에 정확히 일치했다.
+
+- 전류 계열을 모두 제거하면 `System_Failure` event recall은 `0.9770`에서 `0.9310`으로 낮아지고 정상 cycle 오경보율은 `0.0435`에서 `0.1217`로 증가했다.
+- `GripLost` event recall은 전류 계열 제거 시 `0.9231`에서 `0.4103`으로 크게 낮아졌다.
+- `ProtectiveStop`은 전류 계열 제거 시 recall이 `0.9516`에서 `0.9677`로 높아졌지만 오경보율도 `0.0286`에서 `0.0786`으로 증가해 tradeoff였다.
+- `Tool_current`만 제거하면 `System_Failure`와 `ProtectiveStop`은 recall이 소폭 높아지고 오경보율은 유지됐다. `GripLost`는 recall이 같고 오경보율이 `0.0368`에서 `0.0429`로 높아졌다.
+- 속도 단독 입력은 높은 recall과 높은 오경보가 함께 나타났고, 온도 단독 입력은 세 타깃 모두 recall이 낮았다. 다만 온도 제거 후 일부 타깃의 오경보가 증가해 온도는 수집 구간 차이를 보정하는 데 기여했을 가능성이 있다.
+
+따라서 관절 전류 계열이 특히 `GripLost` 탐지에 기여한다는 해석은 지지되지만, 전류 전체가 항상 또는 유일하게 핵심이라는 결론은 지지되지 않는다. 이 결과는 센서 그룹의 예측 기여에 대한 제한적 검증이며 물리적 인과관계의 증거가 아니다.
+
 ## 5. 이 확장이 학술연구로서 갖는 가치
 
 ### 5.1 새 모델보다 평가 문제를 바로잡았다
@@ -145,6 +157,10 @@ Cycle-group 기준 `SMOTE + Random Forest` 비교 결과는 다음과 같다.
 - `과부하 군집이 조기경고를 가능하게 한다`보다 `특정 전류 군집에서 Protective Stop이 더 자주 관찰됐다`가 정확하다.
 - `딥러닝으로 성능을 개선했다`가 아니라 `딥러닝이 기본 모델보다 불리한 조건을 확인했다`가 실제 결과다.
 
+### 5.5 사후 센서 해석을 사전 고정 비교로 보완했다
+
+오류 window 기술통계에서 보인 센서 차이를 그대로 결론으로 삼지 않고, 센서 그룹과 평가 기준을 먼저 고정한 뒤 제거·단독 입력 비교를 수행했다. 결과가 타깃과 오경보 지표에 따라 달랐기 때문에 `전류가 중요하다`는 단일 문장 대신 어떤 전류 그룹이 어느 타깃에서 기여했는지와 반례를 함께 보고할 수 있게 됐다.
+
 ## 6. 현재 연구의 한계
 
 1. 공개된 단일 UR3 CobotOps 수집자료만 사용했으며 외부 데이터 검증이 없다.
@@ -158,8 +174,9 @@ Cycle-group 기준 `SMOTE + Random Forest` 비교 결과는 다음과 같다.
 9. Hyperparameter는 최소 비교 범위로 사전 고정했으며 광범위한 architecture 탐색이나 통계적 최적화를 수행하지 않았다.
 10. Random Forest는 `random_state=42`의 고정 1회이고 딥러닝은 3개 seed consensus다. 딥러닝 초기화 변동은 확인했지만 Random Forest의 seed 변동은 반복 평가하지 않았다.
 11. Random Forest feature importance와 오류 window의 센서 차이는 인과관계가 아니다.
-12. 기존 Logistic Regression과 SVM은 수업 프로젝트에서 실행됐지만, 현재 19-sensor·9-block 동일 조건에서는 다시 비교하지 않았다.
-13. 실제 로봇 환경의 실시간 지연, 연속 경보 정책, 새로운 고장 유형 대응은 검증하지 않았다.
+12. 센서 그룹 제거·단독 사용은 입력 feature 수와 SMOTE가 작동하는 공간을 함께 바꾸므로, 관찰된 성능 차이를 개별 센서의 인과적 효과로 해석할 수 없다.
+13. 기존 Logistic Regression과 SVM은 수업 프로젝트에서 실행됐지만, 현재 19-sensor·9-block 동일 조건에서는 다시 비교하지 않았다.
+14. 실제 로봇 환경의 실시간 지연, 연속 경보 정책, 새로운 고장 유형 대응은 검증하지 않았다.
 
 ## 7. 연구계획서 이행 상태
 
@@ -172,7 +189,7 @@ Cycle-group 기준 `SMOTE + Random Forest` 비교 결과는 다음과 같다.
 | LSTM/GRU Autoencoder | 최소 범위 완료 | LSTM Autoencoder 1개를 정상-only 방식으로 검증; GRU는 추가하지 않음 |
 | 고장 유형별 분석 | 완료 | 통합·Protective Stop·GripLost 분리 |
 | 오탐·미탐 사례 분석 | 완료 | Seed 반복성, block 집중도, 모델 간 오류 겹침 분석 |
-| 센서 패턴 해석 | 부분 완료 | 기술통계 수준이며 인과·설명가능성 분석은 아님 |
+| 센서 패턴 해석 | 제한적 완료 | 오류 기술통계와 사전 고정 센서 그룹 ablation으로 예측 기여를 검증했으나 인과 분석은 아님 |
 | 고장 전조 탐색 | 부분 완료 | GripLost에서 약한 가능성, 조기경고 성능은 미확립 |
 | 최종 보고서·발표자료 | 미완료 | 연구 종료 단계에서 작성할 산출물 |
 
@@ -193,6 +210,7 @@ Cycle-group 기준 `SMOTE + Random Forest` 비교 결과는 다음과 같다.
 - 동일 raw sequence의 1D CNN
 - 정상-only LSTM Autoencoder
 - 딥러닝이 기본 모델을 개선하지 못한 이유와 오류 패턴
+- 사전 고정 센서 그룹 ablation을 통한 관절 전류 기여와 반례
 
 ### 부가 결과
 
@@ -212,10 +230,11 @@ Cycle-group 기준 `SMOTE + Random Forest` 비교 결과는 다음과 같다.
 새 모델을 늘리기 전에 다음 순서가 적절하다.
 
 1. 공동연구자와 주 결과·비교 결과·부가 결과의 위계를 확정한다.
-2. 연구계획서의 지표 목록에 맞춰 저장된 prediction에서 confusion matrix와 ROC-AUC 최종 표를 추가할지 결정한다.
+2. `13`의 최종 지표표와 `14`의 센서 그룹 결과에서 보고서 본문 표와 그림을 선정한다.
 3. 기존 Logistic Regression·SVM을 동일 19-sensor·9-block 조건으로 재실행할 필요가 있는지 결정한다.
-4. 최종 보고서에서는 원본 프로젝트 수치와 후속 연구 수치를 같은 표에서 직접 순위 비교하지 않는다.
-5. 외부 데이터나 cycle-to-condition 대응표를 확보할 때만 공정조건 분류 또는 외부 일반화 검증을 시작한다.
+4. `drop_tool_current`가 일부 지표에서 유리하더라도 결과 확인 후 주 기준선을 교체하지 않고 `all_19`를 공통 기준선으로 유지한다.
+5. 최종 보고서에서는 원본 프로젝트 수치와 후속 연구 수치를 같은 표에서 직접 순위 비교하지 않는다.
+6. 외부 데이터나 cycle-to-condition 대응표를 확보할 때만 공정조건 분류 또는 외부 일반화 검증을 시작한다.
 
 ## 직접 근거
 
@@ -228,3 +247,5 @@ Cycle-group 기준 `SMOTE + Random Forest` 비교 결과는 다음과 같다.
 - Block 및 event 평가: `research/outputs/08_block_held_out_robustness.md`, `research/outputs/09_event_level_block_validation.md`
 - Deep learning 및 오류 분석: `research/outputs/10_sequence_model_comparison.md`, `research/outputs/11_sequence_error_analysis.md`
 - 동일 센서 최종 비교: `research/2026-08-23_lstm_autoencoder_preregistration.md`, `research/outputs/12_matched_lstm_autoencoder_comparison.md`
+- 최종 평가표: `research/outputs/13_final_evaluation_tables.md`, `research/outputs/13_cycle_consensus_confusion_metrics.csv`
+- 센서 그룹 ablation: `research/2026-08-23_sensor_group_ablation_preregistration.md`, `research/outputs/14_sensor_group_ablation.md`, `research/outputs/14_sensor_group_ablation_summary.csv`, `research/outputs/14_sensor_group_ablation_paired_errors.csv`

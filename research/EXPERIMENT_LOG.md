@@ -175,6 +175,21 @@
 - 다음 판단: 새 architecture나 threshold 탐색을 추가하지 않는다. 최종 보고서는 supervised 구간 탐지를 주 결과로 두고, Autoencoder는 사전 고정한 부정적 비교 결과, pre-failure는 `GripLost` 중심의 제한적 부가 분석으로 구성할지 공동연구자와 합의한다.
 - 관련 파일: `research/2026-08-23_lstm_autoencoder_preregistration.md`, `research/12_matched_rf_baseline.py`, `research/12_matched_torch_models.py`, `research/12_matched_results.py`, `research/outputs/12_matched_lstm_autoencoder_comparison.md`, `research/outputs/12_matched_consensus_summary.csv`, `research/outputs/12_matched_pairwise_cycle_errors.csv`
 
+### 2026-08-23 - 14 센서 그룹 ablation
+
+- 질문: 기존 프로젝트에서 반복적으로 중요하게 해석한 전류 계열이 동일 19-sensor·9-block 평가에서도 실제 예측에 기여하는가? 전류·속도·온도·`Tool_current`의 기여는 타깃별로 같은가?
+- 사전 고정: 전체 실행 전에 `research/2026-08-23_sensor_group_ablation_preregistration.md`를 별도 커밋했다. `all_19`를 공통 기준선으로 두고, 센서 그룹 단독 입력 4개와 제거 입력 5개를 고정했다. 결과를 본 뒤 입력 조합이나 threshold를 바꾸지 않기로 했다.
+- 공통 조건: `cycle_run` 경계를 넘지 않는 10-step window, 19개 원본 센서의 mean·std·min·max·range·delta·slope, 9개 acquisition block held-out, SMOTE와 300-tree Random Forest, `random_state=42`, threshold `score > 0.50`을 사용했다.
+- 실행 범위: 3 targets×10 sensor variants×9 test blocks의 270회 학습을 완료했다. 121,050개 window prediction, 6,060개 cycle 결과와 54개 paired error 요약을 저장했다. 개별 실행 시간 합은 635.5초였다.
+- 정합성 검증: `all_19`의 27개 fold score와 prediction이 `12`의 Random Forest 결과와 정확히 일치했다. Variant 간 window 메타데이터와 라벨, threshold 재구성, feature 수, 202개 cycle 포함 여부를 확인했다.
+- 전류 계열 제거: `System_Failure`의 event recall/정상 cycle 오경보율은 `0.9770/0.0435`에서 `0.9310/0.1217`로 악화됐다. `GripLost`는 `0.9231/0.0368`에서 `0.4103/0.0368`로 recall이 크게 낮아졌다. `ProtectiveStop`은 `0.9516/0.0286`에서 `0.9677/0.0786`으로 recall과 오경보가 함께 증가했다.
+- `Tool_current` 제거: `System_Failure`와 `ProtectiveStop`은 recall이 각각 `1.0000`, `0.9677`로 높아지고 오경보율은 기준선과 같았다. `GripLost`는 recall `0.9231`이 유지됐지만 오경보율이 `0.0429`로 소폭 증가했다.
+- 단독 입력: 관절 전류만 사용하면 recall은 `0.9516`~`0.9885`였지만 오경보율이 `0.0643`~`0.1217`로 높았다. 속도만 사용해도 recall은 `0.9231`~`0.9839`였지만 오경보율이 `0.1214`~`0.3006`이었다. 온도만 사용한 recall은 `0.0256`~`0.2529`로 낮았다.
+- 해석: 관절 전류 계열은 특히 `GripLost`와 `System_Failure` 탐지에 기여했지만, 모든 전류 센서가 항상 유용하다는 결론은 성립하지 않았다. 속도는 단독으로도 event를 잡지만 정상 cycle 오경보를 억제하지 못했고, 온도는 단독 탐지력보다 수집 구간 차이 보정에 기여했을 가능성이 있다.
+- 한계: 센서 그룹 변경은 feature 차원과 SMOTE 공간도 바꾸므로 인과적 센서 중요도를 증명하지 않는다. Random Forest seed는 42로 고정했고, 동일 데이터 내부 비교이므로 외부 일반화 근거가 아니다. 일부 window 지표가 개선돼도 cycle 오경보가 악화돼 cycle 지표를 우선 해석한다.
+- 다음 판단: `all_19`를 최종 공통 기준선으로 유지한다. 이번 결과만으로 `drop_tool_current`를 새 주 모델로 선택하거나 추가 조합을 탐색하지 않는다. 동일 조건 Logistic Regression·SVM이 계획서 이행에 필요한지는 공동연구자와 별도로 결정한다.
+- 관련 파일: `research/2026-08-23_sensor_group_ablation_preregistration.md`, `research/14_sensor_group_ablation.py`, `research/14_sensor_group_ablation_results.py`, `research/outputs/14_sensor_group_ablation.md`, `research/outputs/14_sensor_group_ablation_summary.csv`, `research/outputs/14_sensor_group_ablation_paired_errors.csv`
+
 ## 공통 기준
 
 - 재현에 필요한 경로, 스크립트 버전, 주요 파라미터를 남긴다.
