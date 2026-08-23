@@ -159,6 +159,22 @@
 - 다음 판단: 모델 규모 확대는 보류한다. 공동연구자와 구간 단위 이상탐지를 주 결과로 확정할지, 제출 계획서의 미수행 항목인 정상-only LSTM Autoencoder를 동일 평가 규칙으로 1개만 추가할지 합의한다.
 - 관련 파일: `research/11_sequence_error_analysis.py`, `research/outputs/11_sequence_error_analysis.md`, `research/outputs/11_error_cycle_details.csv`, `research/outputs/11_error_pairwise_summary.csv`, `research/outputs/11_false_alarm_sensor_shifts.csv`
 
+### 2026-08-23 - 12 동일 19개 센서 기반 LSTM Autoencoder 후속 비교
+
+- 질문: 동일한 센서 입력과 block-held-out 평가에서 supervised 모델과 정상-only LSTM Autoencoder의 차이는 무엇이며, Autoencoder가 정상 cycle 오경보를 줄이면서 이상 event를 탐지하는가?
+- 사전 고정: 전체 결과 실행 전에 `research/2026-08-23_lstm_autoencoder_preregistration.md`를 커밋했다. 주 연구는 supervised 구간 단위 이상탐지로 두고, Autoencoder는 탐색적 부가 모델로 정했다. Primary threshold는 calibration 정상 cycle 최대 reconstruction error의 q95로 고정했으며 q90과 q97.5는 민감도 분석으로만 사용했다.
+- 공통 입력: `cycle_run` 경계를 넘지 않는 10-step×19개 원본 센서와 202개 cycle을 사용했다. Event/normal cycle은 `System_Failure` 87/115개, `ProtectiveStop` 62/140개, `GripLost` 39/163개다.
+- Random Forest: 각 센서에서 mean, std, min, max, range, delta, slope를 계산한 133개 window feature에 SMOTE와 300-tree Random Forest를 적용했다. 9개 test block을 한 번씩 평가했고 threshold는 `score > 0.50`이다.
+- 1D CNN: 같은 10×19 sequence를 직접 입력했다. 각 outer fold의 train 8개 block 중 7개로 epoch를 선택한 뒤 8개 전체로 재학습했다. Class-weighted BCE, Adam, threshold `score > 0.50`, seed 42/43/44를 사용했다.
+- LSTM Autoencoder: `System_Failure=0`인 완전 정상 cycle만 학습했다. Outer fold마다 test 1개, validation 1개, calibration 2개, core train 5개 block으로 분리했다. Epoch 선택 후 core+validation 6개 block으로 재학습했으며, calibration block은 학습에 사용하지 않았다. 단층 hidden size 32, MSE, Adam learning rate 0.001, 최대 40 epochs, patience 5, seed 42/43/44를 사용했다.
+- 실행 범위: Random Forest 27회, 1D CNN 81회, LSTM Autoencoder 27회를 실행했다. Window prediction은 각각 12,105개와 145,260개이며, Autoencoder calibration 정상 cycle 수는 fold별 13~36개였다. PyTorch 학습 기록 시간 합은 395.0초다.
+- Primary 결과: Random Forest의 event cycle recall/정상 cycle 오경보율은 `System_Failure` 0.9770/0.0435, `ProtectiveStop` 0.9516/0.0286, `GripLost` 0.9231/0.0368이었다. 1D CNN의 2/3 seed consensus는 각각 0.9770/0.1913, 0.9355/0.1929, 0.9231/0.2454였다. LSTM Autoencoder q95는 각각 0.0460/0.1304, 0.0645/0.1071, 0.0000/0.1227이었다.
+- Threshold 민감도: q90으로 낮춰도 Autoencoder event recall은 `System_Failure` 0.0805, `ProtectiveStop` 0.1129, `GripLost` 0.0000에 그쳤고 오경보율은 각각 0.2087, 0.1714, 0.1963으로 증가했다. q97.5도 q95의 결론을 바꾸지 않았다.
+- 해석: 현재 데이터에서 정상 reconstruction error가 고장 유형을 공통으로 분리한다는 가정은 지지되지 않았다. 특히 `GripLost` event는 q90에서도 탐지하지 못했다. Random Forest가 세 타깃 모두에서 recall과 오경보 방향으로 우세했으므로, Autoencoder를 성능 향상 근거로 사용하지 않는다. 이 결과는 기본 모델의 강한 기준선과 딥러닝 가정의 실패 조건을 비교했다는 점에서 연구 결과로 보고한다.
+- 한계: 겹치는 window 4,035개를 독립 표본으로 해석하지 않는다. Cycle-level n은 202개이며, block/session 상관이 남는다. 9개 block은 공정조건 정답이 아니라 수집 구간 proxy이고, 동일 데이터에 대한 내부 후속 비교라 외부 검증이 아니다. Calibration 정상 cycle 수가 적어 quantile 임계값의 해상도도 제한된다.
+- 다음 판단: 새 architecture나 threshold 탐색을 추가하지 않는다. 최종 보고서는 supervised 구간 탐지를 주 결과로 두고, Autoencoder는 사전 고정한 부정적 비교 결과, pre-failure는 `GripLost` 중심의 제한적 부가 분석으로 구성할지 공동연구자와 합의한다.
+- 관련 파일: `research/2026-08-23_lstm_autoencoder_preregistration.md`, `research/12_matched_rf_baseline.py`, `research/12_matched_torch_models.py`, `research/12_matched_results.py`, `research/outputs/12_matched_lstm_autoencoder_comparison.md`, `research/outputs/12_matched_consensus_summary.csv`, `research/outputs/12_matched_pairwise_cycle_errors.csv`
+
 ## 공통 기준
 
 - 재현에 필요한 경로, 스크립트 버전, 주요 파라미터를 남긴다.

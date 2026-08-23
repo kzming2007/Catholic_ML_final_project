@@ -1,0 +1,13 @@
+﻿target,comparison_model,error_type,eligible_cycles,rf_error_count,comparison_error_count,shared_error_count,comparison_only_error_count,rf_only_error_count
+System_Failure,1d_cnn_19_raw,false_alarm,115,5,22,2,20,3
+System_Failure,1d_cnn_19_raw,event_miss,87,2,2,0,2,2
+System_Failure,lstm_autoencoder_19_raw_q95,false_alarm,115,5,15,0,15,5
+System_Failure,lstm_autoencoder_19_raw_q95,event_miss,87,2,83,2,81,0
+ProtectiveStop,1d_cnn_19_raw,false_alarm,140,4,27,2,25,2
+ProtectiveStop,1d_cnn_19_raw,event_miss,62,3,4,2,2,1
+ProtectiveStop,lstm_autoencoder_19_raw_q95,false_alarm,140,4,15,0,15,4
+ProtectiveStop,lstm_autoencoder_19_raw_q95,event_miss,62,3,58,3,55,0
+GripLost,1d_cnn_19_raw,false_alarm,163,6,40,3,37,3
+GripLost,1d_cnn_19_raw,event_miss,39,3,3,1,2,2
+GripLost,lstm_autoencoder_19_raw_q95,false_alarm,163,6,20,0,20,6
+GripLost,lstm_autoencoder_19_raw_q95,event_miss,39,3,39,3,36,0
