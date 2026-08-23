@@ -1,0 +1,13 @@
+﻿target,error_type,deep_model,eligible_cycle_count,rf_error_count,deep_consensus_error_count,shared_error_count,deep_only_error_count,rf_only_error_count
+GripLost,false_alarm,1d_cnn,163,7,50,3,47,4
+GripLost,false_alarm,lstm,163,7,58,4,54,3
+ProtectiveStop,false_alarm,1d_cnn,140,6,26,3,23,3
+ProtectiveStop,false_alarm,lstm,140,6,30,4,26,2
+System_Failure,false_alarm,1d_cnn,115,6,16,1,15,5
+System_Failure,false_alarm,lstm,115,6,20,1,19,5
+GripLost,event_miss,1d_cnn,39,2,2,0,2,2
+GripLost,event_miss,lstm,39,2,1,1,0,1
+ProtectiveStop,event_miss,1d_cnn,62,3,4,1,3,2
+ProtectiveStop,event_miss,lstm,62,3,6,2,4,1
+System_Failure,event_miss,1d_cnn,87,0,3,0,3,0
+System_Failure,event_miss,lstm,87,0,1,0,1,0

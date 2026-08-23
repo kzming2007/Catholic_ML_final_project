@@ -144,6 +144,21 @@
 - 다음 실험: 추가 모델을 바로 늘리지 않고 false alarm이 집중된 정상 cycle과 성능이 낮은 held-out block을 먼저 분석할지 결정한다.
 - 관련 파일: `research/10_prepare_sequence_data.py`, `research/10_torch_sequence_models.py`, `research/10_sequence_model_results.py`, `research/outputs/10_sequence_model_comparison.md`, `research/outputs/10_sequence_model_summary.csv`, `research/outputs/10_sequence_training_runs.csv`
 
+### 2026-08-23 - 11 Sequence model 오류 반복성 및 block 집중도 분석
+
+- 질문: `10`에서 증가한 딥러닝 오경보가 seed별 우연인지, 특정 cycle과 held-out block에서 반복되는 구조적 오류인지 확인할 수 있는가?
+- 데이터 및 입력: `09`의 all-sensors Random Forest prediction, `10`의 1D CNN/LSTM 3-seed prediction, `10`의 10-step×26-feature sequence cache. 새 모델 학습은 수행하지 않았다.
+- 실행 조건: `python -X utf8 research\11_sequence_error_analysis.py`.
+- 방법: 딥러닝은 3개 seed 중 2개 이상이 같은 cycle에서 경보하면 cycle consensus 오경보로 정의했다. Event detection도 2개 이상 seed가 실제 positive window를 하나 이상 탐지해야 consensus 탐지로 두었다. Random Forest는 고정 1회 결과를 사용했다. 정상 cycle 내부에서 동일 window에 2/3 seed consensus가 발생한 구간과 true-negative 구간의 feature mean/range 중앙값 차이를 true-negative IQR로 표준화해 기술통계로 비교했다.
+- Consensus 결과: 정상 cycle 오경보율은 `System_Failure`에서 Random Forest 0.0522, 1D CNN 0.1391, LSTM 0.1739였다. `ProtectiveStop`은 0.0429/0.1857/0.2143, `GripLost`는 0.0429/0.3067/0.3558이었다. Consensus event recall은 각각 `System_Failure` 1.0000/0.9655/0.9885, `ProtectiveStop` 0.9516/0.9355/0.9032, `GripLost` 0.9487/0.9487/0.9744였다.
+- Seed 반복성: 3개 seed 모두에서 경보한 정상 cycle은 `System_Failure` 1D CNN/LSTM 10/9개, `ProtectiveStop` 15/20개, `GripLost` 32/35개였다. 오경보 증가를 초기화 seed의 일시적 변동만으로 설명하기 어렵다.
+- 모델 간 오류 겹침: Random Forest는 정상으로 처리했지만 deep learning만 consensus 오경보를 낸 cycle은 `System_Failure` 1D CNN/LSTM 15/19개, `ProtectiveStop` 23/26개, `GripLost` 47/54개였다. 딥러닝 오류 대부분은 Random Forest 오류의 단순 재현이 아니었다.
+- Block 집중: 가장 높은 consensus 오경보율은 `GripLost` LSTM block 8의 0.8000, `GripLost` 1D CNN block 10의 0.7619, `System_Failure` LSTM block 10의 0.7143이었다. `ProtectiveStop`은 두 모델 모두 block 10에서 0.5000이었고 1D CNN은 block 5에서도 0.4500이었다.
+- Sensor 기술통계: 정상 cycle의 반복 오경보 window에서 `System_Failure` 1D CNN은 `Current_J3` 평균과 `Temperature_J0/J1` 평균, LSTM은 `Tool_current` mean/range 차이가 상대적으로 컸다. `ProtectiveStop`은 `Current_J2/J3` 평균과 `Speed_J4` range, `GripLost`는 `Abs_Current_Sum` mean/range 차이가 반복됐다.
+- 해석: 딥러닝 오경보는 seed가 바뀌어도 같은 cycle에서 반복되고 일부 block에 집중됐다. 이는 현재 sequence model이 짧은 구간의 특정 저변동·센서 수준 패턴과 수집 구간 변화를 이상으로 오인했을 가능성을 제시하지만, sensor shift는 겹치는 window의 사후 기술통계이므로 원인 또는 feature importance로 확정하지 않는다.
+- 다음 판단: 모델 규모 확대는 보류한다. 공동연구자와 구간 단위 이상탐지를 주 결과로 확정할지, 제출 계획서의 미수행 항목인 정상-only LSTM Autoencoder를 동일 평가 규칙으로 1개만 추가할지 합의한다.
+- 관련 파일: `research/11_sequence_error_analysis.py`, `research/outputs/11_sequence_error_analysis.md`, `research/outputs/11_error_cycle_details.csv`, `research/outputs/11_error_pairwise_summary.csv`, `research/outputs/11_false_alarm_sensor_shifts.csv`
+
 ## 공통 기준
 
 - 재현에 필요한 경로, 스크립트 버전, 주요 파라미터를 남긴다.

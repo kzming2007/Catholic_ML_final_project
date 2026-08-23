@@ -1,0 +1,7 @@
+﻿target,model,normal_cycle_count,event_cycle_count,normal_cycles_alerted_by_0_seeds,event_cycles_detected_by_0_seeds,normal_cycles_alerted_by_1_seeds,event_cycles_detected_by_1_seeds,normal_cycles_alerted_by_2_seeds,event_cycles_detected_by_2_seeds,normal_cycles_alerted_by_3_seeds,event_cycles_detected_by_3_seeds
+System_Failure,1d_cnn,115,87,86,0,13,3,6,1,10,83
+System_Failure,lstm,115,87,73,1,22,0,11,7,9,79
+ProtectiveStop,1d_cnn,140,62,96,2,18,2,11,2,15,56
+ProtectiveStop,lstm,140,62,101,5,9,1,10,0,20,56
+GripLost,1d_cnn,163,39,86,0,27,2,18,2,32,35
+GripLost,lstm,163,39,72,0,33,1,23,4,35,34

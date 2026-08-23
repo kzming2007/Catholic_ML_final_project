@@ -34,22 +34,24 @@
 - `10_prepare_sequence_data.py`: 기존 `09`와 동일한 10-step window를 10×26 raw sequence로 준비하고 정합성 검증
 - `10_torch_sequence_models.py`: 외부 PyTorch 환경에서 고정 1D CNN/LSTM을 block-held-out 방식으로 학습
 - `10_sequence_model_results.py`: Random Forest와 sequence model의 window·event·오경보 지표 비교
+- `11_sequence_error_analysis.py`: 기존 예측에서 seed 반복 오류, block 집중도, 모델 간 오류 겹침, 정상 cycle 센서 차이 분석
 - `requirements.txt`: 연구 스크립트를 실제 실행한 Python 패키지 버전
 - `EXPERIMENT_LOG.md`: 실제 실행한 실험의 시간순 기록
 - `outputs/`: 실행 결과 CSV/Markdown 저장 위치
 
 ## 현재 상태
 
-- 기준일: 2026-08-12
-- 완료: 데이터 감사, row-level baseline 재현, cycle_run 내부 window baseline, pre-failure baseline, 반복 split·threshold 검증, 공정조건 분리 가능성 진단, cycle_run 경계 재검증, acquisition block held-out 강건성 검증, 공통 10-step 사건 단위 기준선 검증, 고정 1D CNN/LSTM 비교.
-- 현재 결론: 1D CNN과 LSTM은 높은 event cycle recall을 보였지만 정상 cycle 오경보가 크게 증가했다. 세 target 모두에서 Random Forest가 pooled window positive F1, PR-AUC, 정상 cycle 오경보율을 기준으로 더 균형 잡힌 결과를 보였다.
+- 기준일: 2026-08-23
+- 완료: 데이터 감사, row-level baseline 재현, cycle_run 내부 window baseline, pre-failure baseline, 반복 split·threshold 검증, 공정조건 분리 가능성 진단, cycle_run 경계 재검증, acquisition block held-out 강건성 검증, 공통 10-step 사건 단위 기준선 검증, 고정 1D CNN/LSTM 비교, sequence model 오류 분석.
+- 현재 결론: 1D CNN과 LSTM은 높은 event cycle recall을 보였지만 정상 cycle 오경보가 크게 증가했다. 2/3 seed consensus에서도 오경보율은 `System_Failure` 0.1391/0.1739, `ProtectiveStop` 0.1857/0.2143, `GripLost` 0.3067/0.3558로 Random Forest의 0.0522/0.0429/0.0429보다 높았다. 다수 오류가 Random Forest와 겹치지 않고 3개 seed 모두에서 반복되어, 단순 초기화 변동보다 sequence model의 결정 경계와 block 변화 민감도 문제로 보는 것이 타당하다.
 - 막힌 점: 실제 공정조건 분류는 cycle-to-condition 정답표가 없어 검증할 수 없다. 이 제약은 시계열 이상탐지 연구 진행을 막지는 않는다.
 
 ## 다음 작업
 
-1. 구간 단위 이상탐지는 `09`와 `10`의 결과를 근거로 Random Forest를 고정 기준선으로 유지한다.
-2. 딥러닝 후속 검증이 필요하면 모델 규모를 늘리기 전에 오류가 집중된 held-out block과 정상 cycle false alarm 구간을 분석한다.
-3. pre-failure 결과(`03`-`05`)는 `GripLost`의 약한 사전 신호와 한계 분석으로 제한한다.
+1. 구간 단위 이상탐지는 `09`-`11`의 결과를 근거로 Random Forest를 고정 기준선으로 유지한다.
+2. 공동연구자와 supervised 구간 탐지를 주 결과로 둘지, 계획서 이행을 위한 정상-only LSTM Autoencoder 1개를 최소 추가할지 합의한다.
+3. Autoencoder를 추가한다면 동일 10-step, 동일 9개 block, train-normal-only, validation threshold, 3개 seed, event recall·정상 cycle 오경보 지표를 사전 고정한다.
+4. pre-failure 결과(`03`-`05`)는 `GripLost`의 약한 사전 신호와 한계 분석으로 제한한다.
 
 ## 실행 순서
 
@@ -67,6 +69,7 @@ python -X utf8 research\09_event_level_block_validation.py
 python -X utf8 research\10_prepare_sequence_data.py
 & "D:\Projects\Cube_Codex\.venvs\sam2_clean\Scripts\python.exe" -X utf8 research\10_torch_sequence_models.py --manifest research\.sequence_cache\10_sequence_manifest.json --output-dir research\outputs --device cuda
 python -X utf8 research\10_sequence_model_results.py
+python -X utf8 research\11_sequence_error_analysis.py
 ```
 
 ## 데이터 provenance 및 실행 환경
@@ -101,6 +104,9 @@ python -X utf8 research\10_sequence_model_results.py
 - `10`의 Random Forest는 10-step을 182개 통계 feature로 요약하고, 1D CNN/LSTM은 같은 구간을 10×26 순서 입력으로 사용한다.
 - `10`의 deep learning 결과는 seed 3개 평균이며, Random Forest는 `09`의 고정 1회 prediction을 재사용한다.
 - `10`의 window 지표는 seed별 9개 held-out prediction을 합친 pooled 지표라서, `09` 보고서의 block별 평균과 숫자가 직접 같지는 않다.
+- `11`의 deep learning cycle consensus는 3개 seed 중 2개 이상이 같은 cycle에서 경보한 경우다. Sensor shift는 동일 window에 대한 2/3 consensus만 사용한다.
+- `11`에서 deep learning 오경보의 대부분은 Random Forest와 겹치지 않았다. `System_Failure`의 deep-only 오경보는 1D CNN/LSTM 15/19개, `ProtectiveStop` 23/26개, `GripLost` 47/54개였다.
+- 정상 cycle의 반복 오경보 window는 target별로 낮은 관절 움직임 범위, 특정 전류 수준, Tool current 변화 또는 온도 수준 차이를 보였으나, 겹치는 window의 기술통계이므로 인과적 feature importance로 해석하지 않는다.
 
 ## 근거
 
@@ -109,11 +115,13 @@ python -X utf8 research\10_sequence_model_results.py
 - 공정조건 진단: `research/outputs/06_process_condition_separability.md`, `research/outputs/06_condition_cluster_summary.csv`, `research/outputs/06_condition_block_classification.csv`
 - 경계·강건성 검증: `research/outputs/07_cycle_run_revalidation.md`, `research/outputs/08_block_held_out_robustness.md`, `research/outputs/09_event_level_block_validation.md`
 - Sequence model 비교: `research/outputs/10_sequence_model_comparison.md`, `research/outputs/10_sequence_model_summary.csv`, `research/outputs/10_sequence_block_results.csv`, `research/outputs/10_sequence_window_predictions.csv`
+- 오류 분석: `research/outputs/11_sequence_error_analysis.md`, `research/outputs/11_error_cycle_details.csv`, `research/outputs/11_error_block_summary.csv`, `research/outputs/11_false_alarm_sensor_shifts.csv`
 - 관련 메모: `research/2026-07-08_time_series_method_decision.md`
 
 ## 열린 질문
 
-- 딥러닝 오류 분석을 후속 최소 검증으로 수행할지 결정해야 한다. 추가 architecture 탐색은 그 이후에 판단한다.
+- 제출 계획서의 LSTM/GRU Autoencoder 항목을 정상-only LSTM Autoencoder 1개로 최소 이행할지 공동연구자와 합의해야 한다.
+- 최종 보고서의 주 태스크를 구간 단위 이상탐지로 두고 pre-failure를 제한적 부가 분석으로 둘지 합의해야 한다.
 - `GripLost` pre-failure threshold 0.30을 후속 검증 후보로 유지할지 정해야 한다.
 - 공정조건 분류는 대응표를 확보하지 않는 한 연구 범위에 포함하지 않는다.
 
@@ -125,3 +133,4 @@ python -X utf8 research\10_sequence_model_results.py
 - 2026-08-10: `cycle_run` 기준으로 `02`-`05`를 재실행하고 경계 재검증(`07`)과 acquisition block held-out 검증(`08`)을 반영했다.
 - 2026-08-12: 공통 10-step 사건 단위 검증(`09`)을 반영하고 데이터 provenance와 실행 환경을 기록했다.
 - 2026-08-12: 외부 PyTorch 환경을 변경 없이 재사용해 고정 1D CNN/LSTM 비교(`10`)를 완료하고 결과와 한계를 반영했다.
+- 2026-08-23: 새 학습 없이 `09`·`10` 예측을 재사용해 seed 반복 오류, block 집중도, 모델 간 오류 겹침과 정상 cycle 센서 차이 분석(`11`)을 완료했다.

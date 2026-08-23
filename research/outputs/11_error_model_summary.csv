@@ -1,0 +1,10 @@
+﻿target,model,seed_count,consensus_required,normal_cycle_count,consensus_false_alarm_cycle_count,consensus_false_alarm_rate,event_cycle_count,consensus_detected_event_count,consensus_event_recall
+GripLost,rf_window_features,1,1,163,7,0.04294478527607362,39,37,0.9487179487179487
+GripLost,1d_cnn,3,2,163,50,0.3067484662576687,39,37,0.9487179487179487
+GripLost,lstm,3,2,163,58,0.3558282208588957,39,38,0.9743589743589743
+ProtectiveStop,rf_window_features,1,1,140,6,0.04285714285714286,62,59,0.9516129032258065
+ProtectiveStop,1d_cnn,3,2,140,26,0.18571428571428572,62,58,0.9354838709677419
+ProtectiveStop,lstm,3,2,140,30,0.21428571428571427,62,56,0.9032258064516129
+System_Failure,rf_window_features,1,1,115,6,0.05217391304347826,87,87,1.0
+System_Failure,1d_cnn,3,2,115,16,0.1391304347826087,87,84,0.9655172413793104
+System_Failure,lstm,3,2,115,20,0.17391304347826086,87,86,0.9885057471264368
