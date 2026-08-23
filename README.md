@@ -73,7 +73,9 @@ Random Forest의 event cycle recall은 `System_Failure` 0.9770, `ProtectiveStop`
 
 사전 고정한 센서 그룹 ablation에서는 전류 계열 제거가 `System_Failure`와 `GripLost`의 event recall을 낮췄지만, `ProtectiveStop`에서는 recall 증가와 오경보 증가가 함께 나타났습니다. `Tool_current` 제거는 `System_Failure`와 `ProtectiveStop`에서 오히려 개선됐습니다. 따라서 관절 전류 특징의 예측 기여는 지지되지만, 모든 전류 센서가 항상 핵심이거나 고장의 원인이라는 주장은 지지되지 않습니다.
 
-기존 프로젝트와 연구 확장의 차이, 얻은 결과, 한계는 [연구 종합 문서](research/2026-08-23_project_to_research_synthesis.md)에 정리했습니다. 재현 명령과 현재 상태는 [연구 README](research/README.md), 동일 센서 비교 결과는 [최종 비교 결과](research/outputs/12_matched_lstm_autoencoder_comparison.md), 센서별 해석 근거는 [센서 그룹 ablation 결과](research/outputs/14_sensor_group_ablation.md)에서 확인할 수 있습니다.
+같은 133개 시계열 통계 특징으로 기본 분류 모델도 비교했습니다. Logistic Regression은 event recall 0.9677-1.0000을 보였지만 정상 cycle 오경보율이 0.2714-0.5304로 높았습니다. RBF SVM은 타깃별 trade-off가 남았고, Random Forest가 세 타깃에서 높은 탐지율과 낮은 오경보를 가장 안정적으로 함께 유지했습니다.
+
+기존 프로젝트와 연구 확장의 차이, 얻은 결과, 한계는 [연구 종합 문서](research/2026-08-23_project_to_research_synthesis.md)에 정리했습니다. 재현 명령과 현재 상태는 [연구 README](research/README.md), 동일 센서 비교 결과는 [최종 비교 결과](research/outputs/12_matched_lstm_autoencoder_comparison.md), 센서별 해석 근거는 [센서 그룹 ablation 결과](research/outputs/14_sensor_group_ablation.md), 기본 모델 통제 결과는 [기본 분류 모델 비교](research/outputs/15_classical_model_comparison.md)에서 확인할 수 있습니다.
 
 <br>
 

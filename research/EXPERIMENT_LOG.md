@@ -190,6 +190,22 @@
 - 다음 판단: `all_19`를 최종 공통 기준선으로 유지한다. 이번 결과만으로 `drop_tool_current`를 새 주 모델로 선택하거나 추가 조합을 탐색하지 않는다. 동일 조건 Logistic Regression·SVM이 계획서 이행에 필요한지는 공동연구자와 별도로 결정한다.
 - 관련 파일: `research/2026-08-23_sensor_group_ablation_preregistration.md`, `research/14_sensor_group_ablation.py`, `research/14_sensor_group_ablation_results.py`, `research/outputs/14_sensor_group_ablation.md`, `research/outputs/14_sensor_group_ablation_summary.csv`, `research/outputs/14_sensor_group_ablation_paired_errors.csv`
 
+### 2026-08-23 - 15 동일 시계열 특징 기반 기본 분류 모델 비교
+
+- 질문: 동일한 10-step×19-sensor 시계열 통계 특징에서 Logistic Regression, RBF SVM, Random Forest를 비교하면 특징 정제의 효과와 모델 구조의 효과를 구분할 수 있는가?
+- 사전 고정: 전체 실행 전에 `research/2026-08-23_classical_model_comparison_preregistration.md`를 별도 커밋했다. Logistic Regression L2 `C=1`, RBF SVM `C=1`, `gamma=scale`, 공통 threshold `score > 0.50`을 고정하고 tuning을 수행하지 않았다.
+- 공통 조건: `cycle_run` 경계를 넘지 않는 10-step window, 19개 원본 센서의 133개 통계 특징, 9개 acquisition block held-out, 학습 fold 내부 SMOTE를 사용했다. Logistic Regression과 SVM에는 학습 fold 내부 `StandardScaler`를 적용했다. Random Forest는 `12`의 고정 prediction을 재사용했다.
+- 실행 범위: 3 targets×2개 새 모델×9 test blocks의 54회 학습과 24,210개 새 window prediction을 완료했다. 기존 Random Forest를 합쳐 모델별 4,035개 window와 202개 cycle을 비교했다. 기록된 새 학습 시간 합은 779.1초였다.
+- 실행 검증: 모든 fold의 test window 메타데이터와 label이 Random Forest 기준선과 일치했다. 비유한 score와 fit 실패는 없었고 Logistic Regression 27개 fold는 모두 `max_iter=5000` 전에 수렴했다. 최대 반복 횟수는 4,757회였다.
+- `System_Failure`: Random Forest, Logistic Regression, RBF SVM의 event recall/정상 cycle 오경보율은 각각 `0.9770/0.0435`, `0.9885/0.5304`, `0.9540/0.0957`이었다.
+- `ProtectiveStop`: 세 모델은 각각 `0.9516/0.0286`, `0.9677/0.2714`, `0.9032/0.0214`였다. SVM은 오경보 cycle이 Random Forest보다 1개 적었지만 event cycle을 3개 더 놓쳤다.
+- `GripLost`: 세 모델은 각각 `0.9231/0.0368`, `1.0000/0.4908`, `0.9487/0.1779`였다.
+- Paired 오류: Logistic Regression은 Random Forest가 정상으로 처리한 cycle에서 새 오경보를 `System_Failure` 58개, `ProtectiveStop` 34개, `GripLost` 75개 만들었다. RBF SVM의 새 오경보는 각각 8개, 1개, 25개였다.
+- 해석: 시계열 통계 특징에는 선형 모델도 높은 event recall을 낼 수 있는 신호가 남지만, Logistic Regression은 정상 cycle을 충분히 배제하지 못했다. RBF SVM은 이를 줄였지만 타깃별 trade-off가 남았다. 현재 고정 조건에서는 Random Forest가 탐지율과 오경보율을 가장 안정적으로 균형화했다.
+- 한계: 대표 기본 설정 한 개씩만 비교했으므로 각 모델 계열의 최적 성능이 아니다. SVM과 Random Forest의 probability 산출 방식은 다르다. 동일 데이터 내부 비교이며 조기 고장 예측이나 외부 일반화 결과가 아니다.
+- 다음 판단: 결과를 본 뒤 Grid Search, kernel, `C`, `gamma`, threshold를 추가로 조정하지 않는다. 기본 모델 비교를 최종 보고서 본문의 통제 실험으로 둘지 부록으로 둘지만 공동연구자와 결정한다.
+- 관련 파일: `research/2026-08-23_classical_model_comparison_preregistration.md`, `research/15_classical_model_comparison.py`, `research/15_classical_model_comparison_results.py`, `research/outputs/15_classical_model_comparison.md`, `research/outputs/15_classical_model_summary.csv`, `research/outputs/15_classical_model_paired_errors.csv`
+
 ## 공통 기준
 
 - 재현에 필요한 경로, 스크립트 버전, 주요 파라미터를 남긴다.

@@ -1,0 +1,13 @@
+﻿target,model,error_type,eligible_cycles,random_forest_error_count,model_error_count,shared_error_count,new_model_error_count,corrected_rf_error_count
+System_Failure,logistic_regression,event_miss,87,2,1,0,1,2
+System_Failure,logistic_regression,false_alarm,115,5,61,3,58,2
+System_Failure,rbf_svm,event_miss,87,2,4,0,4,2
+System_Failure,rbf_svm,false_alarm,115,5,11,3,8,2
+ProtectiveStop,logistic_regression,event_miss,62,3,2,1,1,2
+ProtectiveStop,logistic_regression,false_alarm,140,4,38,4,34,0
+ProtectiveStop,rbf_svm,event_miss,62,3,6,3,3,0
+ProtectiveStop,rbf_svm,false_alarm,140,4,3,2,1,2
+GripLost,logistic_regression,event_miss,39,3,0,0,0,3
+GripLost,logistic_regression,false_alarm,163,6,80,5,75,1
+GripLost,rbf_svm,event_miss,39,3,2,2,0,1
+GripLost,rbf_svm,false_alarm,163,6,29,4,25,2

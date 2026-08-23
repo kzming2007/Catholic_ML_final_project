@@ -134,6 +134,24 @@ Cycle-group 기준 `SMOTE + Random Forest` 비교 결과는 다음과 같다.
 
 따라서 관절 전류 계열이 특히 `GripLost` 탐지에 기여한다는 해석은 지지되지만, 전류 전체가 항상 또는 유일하게 핵심이라는 결론은 지지되지 않는다. 이 결과는 센서 그룹의 예측 기여에 대한 제한적 검증이며 물리적 인과관계의 증거가 아니다.
 
+### 4.8 기본 분류 모델은 신호를 잡았지만 오경보를 억제하지 못했다
+
+동일한 133개 시계열 통계 특징과 9개 block-held-out 평가에서 Logistic Regression과 RBF SVM을 tuning 없이 비교했다. Random Forest의 고정 결과를 공통 기준선으로 재사용했다.
+
+| Target | 모델 | Event cycle recall | 정상 cycle 오경보율 |
+| --- | --- | ---: | ---: |
+| `System_Failure` | Random Forest | 0.9770 | 0.0435 |
+|  | Logistic Regression | 0.9885 | 0.5304 |
+|  | RBF SVM | 0.9540 | 0.0957 |
+| `ProtectiveStop` | Random Forest | 0.9516 | 0.0286 |
+|  | Logistic Regression | 0.9677 | 0.2714 |
+|  | RBF SVM | 0.9032 | 0.0214 |
+| `GripLost` | Random Forest | 0.9231 | 0.0368 |
+|  | Logistic Regression | 1.0000 | 0.4908 |
+|  | RBF SVM | 0.9487 | 0.1779 |
+
+Logistic Regression의 높은 recall은 정상 cycle의 27.1~53.0%에 경보하는 결과와 함께 나타났다. 이는 통계 특징에 선형적으로 포착되는 이상 신호가 있지만 선형 경계만으로 정상 구간을 안정적으로 제외하지 못했음을 보여준다. RBF SVM은 Logistic Regression보다 오경보를 줄였지만 `System_Failure`에서는 Random Forest보다 두 지표가 모두 불리했고, 나머지 타깃에서는 recall과 오경보의 trade-off가 남았다. 현재 조건에서는 Random Forest의 비선형 분기와 특징 상호작용 처리가 추가적인 균형에 기여한 것으로 해석한다.
+
 ## 5. 이 확장이 학술연구로서 갖는 가치
 
 ### 5.1 새 모델보다 평가 문제를 바로잡았다
@@ -161,6 +179,10 @@ Cycle-group 기준 `SMOTE + Random Forest` 비교 결과는 다음과 같다.
 
 오류 window 기술통계에서 보인 센서 차이를 그대로 결론으로 삼지 않고, 센서 그룹과 평가 기준을 먼저 고정한 뒤 제거·단독 입력 비교를 수행했다. 결과가 타깃과 오경보 지표에 따라 달랐기 때문에 `전류가 중요하다`는 단일 문장 대신 어떤 전류 그룹이 어느 타깃에서 기여했는지와 반례를 함께 보고할 수 있게 됐다.
 
+### 5.6 특징 설계와 모델 구조의 효과를 분리했다
+
+동일 시계열 특징을 선형 모델, kernel 모델, 트리 앙상블에 입력해 모델만 바꾸는 통제 비교를 수행했다. 기본 모델도 event 신호를 포착했지만 정상 cycle 오경보 차이가 컸다. 이를 통해 성능 향상을 시계열 특징 정제만의 효과 또는 Random Forest만의 효과로 단순화하지 않고, 두 요소의 결합으로 설명할 수 있다.
+
 ## 6. 현재 연구의 한계
 
 1. 공개된 단일 UR3 CobotOps 수집자료만 사용했으며 외부 데이터 검증이 없다.
@@ -175,8 +197,9 @@ Cycle-group 기준 `SMOTE + Random Forest` 비교 결과는 다음과 같다.
 10. Random Forest는 `random_state=42`의 고정 1회이고 딥러닝은 3개 seed consensus다. 딥러닝 초기화 변동은 확인했지만 Random Forest의 seed 변동은 반복 평가하지 않았다.
 11. Random Forest feature importance와 오류 window의 센서 차이는 인과관계가 아니다.
 12. 센서 그룹 제거·단독 사용은 입력 feature 수와 SMOTE가 작동하는 공간을 함께 바꾸므로, 관찰된 성능 차이를 개별 센서의 인과적 효과로 해석할 수 없다.
-13. 기존 Logistic Regression과 SVM은 수업 프로젝트에서 실행됐지만, 현재 19-sensor·9-block 동일 조건에서는 다시 비교하지 않았다.
-14. 실제 로봇 환경의 실시간 지연, 연속 경보 정책, 새로운 고장 유형 대응은 검증하지 않았다.
+13. Logistic Regression과 RBF SVM은 고정 `C=1`의 대표 설정 한 개만 비교했으며, 각 모델 계열의 최적 성능이나 통계적 동등성을 검증한 것은 아니다.
+14. SVM probability와 Random Forest probability는 산출 방식이 달라 score 자체를 보정된 확률로 직접 비교할 수 없다.
+15. 실제 로봇 환경의 실시간 지연, 연속 경보 정책, 새로운 고장 유형 대응은 검증하지 않았다.
 
 ## 7. 연구계획서 이행 상태
 
@@ -190,6 +213,7 @@ Cycle-group 기준 `SMOTE + Random Forest` 비교 결과는 다음과 같다.
 | 고장 유형별 분석 | 완료 | 통합·Protective Stop·GripLost 분리 |
 | 오탐·미탐 사례 분석 | 완료 | Seed 반복성, block 집중도, 모델 간 오류 겹침 분석 |
 | 센서 패턴 해석 | 제한적 완료 | 오류 기술통계와 사전 고정 센서 그룹 ablation으로 예측 기여를 검증했으나 인과 분석은 아님 |
+| 기본 분류 모델 통제 비교 | 완료 | 동일 133개 특징에서 Logistic Regression·RBF SVM·Random Forest 비교 |
 | 고장 전조 탐색 | 부분 완료 | GripLost에서 약한 가능성, 조기경고 성능은 미확립 |
 | 최종 보고서·발표자료 | 미완료 | 연구 종료 단계에서 작성할 산출물 |
 
@@ -211,6 +235,7 @@ Cycle-group 기준 `SMOTE + Random Forest` 비교 결과는 다음과 같다.
 - 정상-only LSTM Autoencoder
 - 딥러닝이 기본 모델을 개선하지 못한 이유와 오류 패턴
 - 사전 고정 센서 그룹 ablation을 통한 관절 전류 기여와 반례
+- 동일 통계 특징의 Logistic Regression·RBF SVM 통제 비교
 
 ### 부가 결과
 
@@ -231,10 +256,11 @@ Cycle-group 기준 `SMOTE + Random Forest` 비교 결과는 다음과 같다.
 
 1. 공동연구자와 주 결과·비교 결과·부가 결과의 위계를 확정한다.
 2. `13`의 최종 지표표와 `14`의 센서 그룹 결과에서 보고서 본문 표와 그림을 선정한다.
-3. 기존 Logistic Regression·SVM을 동일 19-sensor·9-block 조건으로 재실행할 필요가 있는지 결정한다.
-4. `drop_tool_current`가 일부 지표에서 유리하더라도 결과 확인 후 주 기준선을 교체하지 않고 `all_19`를 공통 기준선으로 유지한다.
-5. 최종 보고서에서는 원본 프로젝트 수치와 후속 연구 수치를 같은 표에서 직접 순위 비교하지 않는다.
-6. 외부 데이터나 cycle-to-condition 대응표를 확보할 때만 공정조건 분류 또는 외부 일반화 검증을 시작한다.
+3. 기본 분류 모델 비교는 본문 통제 실험 또는 부록 중 어디에 둘지 결정한다.
+4. 현재 결과를 근거로 Logistic Regression·SVM의 Grid Search나 threshold tuning을 추가하지 않는다.
+5. `drop_tool_current`가 일부 지표에서 유리하더라도 결과 확인 후 주 기준선을 교체하지 않고 `all_19`를 공통 기준선으로 유지한다.
+6. 최종 보고서에서는 원본 프로젝트 수치와 후속 연구 수치를 같은 표에서 직접 순위 비교하지 않는다.
+7. 외부 데이터나 cycle-to-condition 대응표를 확보할 때만 공정조건 분류 또는 외부 일반화 검증을 시작한다.
 
 ## 직접 근거
 
@@ -249,3 +275,4 @@ Cycle-group 기준 `SMOTE + Random Forest` 비교 결과는 다음과 같다.
 - 동일 센서 최종 비교: `research/2026-08-23_lstm_autoencoder_preregistration.md`, `research/outputs/12_matched_lstm_autoencoder_comparison.md`
 - 최종 평가표: `research/outputs/13_final_evaluation_tables.md`, `research/outputs/13_cycle_consensus_confusion_metrics.csv`
 - 센서 그룹 ablation: `research/2026-08-23_sensor_group_ablation_preregistration.md`, `research/outputs/14_sensor_group_ablation.md`, `research/outputs/14_sensor_group_ablation_summary.csv`, `research/outputs/14_sensor_group_ablation_paired_errors.csv`
+- 기본 분류 모델 비교: `research/2026-08-23_classical_model_comparison_preregistration.md`, `research/outputs/15_classical_model_comparison.md`, `research/outputs/15_classical_model_summary.csv`, `research/outputs/15_classical_model_paired_errors.csv`
