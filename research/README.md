@@ -35,6 +35,7 @@
 - `10_torch_sequence_models.py`: 외부 PyTorch 환경에서 고정 1D CNN/LSTM을 block-held-out 방식으로 학습
 - `10_sequence_model_results.py`: Random Forest와 sequence model의 window·event·오경보 지표 비교
 - `11_sequence_error_analysis.py`: 기존 예측에서 seed 반복 오류, block 집중도, 모델 간 오류 겹침, 정상 cycle 센서 차이 분석
+- `2026-08-23_project_to_research_synthesis.md`: 수업 프로젝트와 학술연구의 차이, 현재 결론, 한계, 계획서 이행 상태를 정리한 종합 문서
 - `2026-08-23_lstm_autoencoder_preregistration.md`: 동일 19개 센서 비교와 정상-only LSTM Autoencoder의 분석 기준을 결과 확인 전에 고정한 문서
 - `12_matched_rf_baseline.py`: 10-step×19개 원본 센서를 133개 통계 feature로 요약한 고정 Random Forest 기준선
 - `12_matched_torch_models.py`: 같은 10-step×19개 원본 센서를 사용하는 1D CNN과 정상-only LSTM Autoencoder 학습
@@ -52,10 +53,11 @@
 
 ## 다음 작업
 
-1. 최종 연구 서술은 동일 19개 센서 비교의 Random Forest를 구간 단위 이상탐지 주 결과로 둔다.
-2. 1D CNN과 정상-only LSTM Autoencoder는 딥러닝 비교군으로 보고하되, 성능 열세와 정상 분포 가정의 실패를 그대로 해석한다.
-3. pre-failure 결과(`03`-`05`)는 `GripLost`의 약한 사전 신호를 확인한 제한적 탐색 결과로 분리한다.
-4. 새 모델 확대보다 공동연구자와 최종 보고서의 연구 질문·주 결과·부가 결과 구조를 먼저 합의한다.
+1. `2026-08-23_project_to_research_synthesis.md`를 기준으로 공동연구자와 주 결과·비교 결과·부가 결과의 위계를 확정한다.
+2. 최종 연구 서술은 동일 19개 센서 비교의 Random Forest를 구간 단위 이상탐지 주 결과로 둔다.
+3. 1D CNN과 정상-only LSTM Autoencoder는 딥러닝 비교군으로 보고하되, 성능 열세와 정상 분포 가정의 실패를 그대로 해석한다.
+4. Pre-failure 결과(`03`-`05`)는 `GripLost`의 약한 사전 신호를 확인한 제한적 탐색 결과로 분리한다.
+5. 새 학습 전, 저장된 prediction으로 최종 지표표를 보완할지와 Logistic Regression·SVM의 동일 조건 재검증 필요성을 결정한다.
 
 ## 실행 순서
 
@@ -128,6 +130,7 @@ python -X utf8 research\12_matched_results.py
 - Sequence model 비교: `research/outputs/10_sequence_model_comparison.md`, `research/outputs/10_sequence_model_summary.csv`, `research/outputs/10_sequence_block_results.csv`, `research/outputs/10_sequence_window_predictions.csv`
 - 오류 분석: `research/outputs/11_sequence_error_analysis.md`, `research/outputs/11_error_cycle_details.csv`, `research/outputs/11_error_block_summary.csv`, `research/outputs/11_false_alarm_sensor_shifts.csv`
 - 동일 센서 후속 비교: `research/2026-08-23_lstm_autoencoder_preregistration.md`, `research/outputs/12_matched_lstm_autoencoder_comparison.md`, `research/outputs/12_matched_consensus_summary.csv`, `research/outputs/12_matched_pairwise_cycle_errors.csv`
+- 연구 종합: `research/2026-08-23_project_to_research_synthesis.md`
 - 관련 메모: `research/2026-07-08_time_series_method_decision.md`
 
 ## 열린 질문
@@ -147,3 +150,4 @@ python -X utf8 research\12_matched_results.py
 - 2026-08-12: 외부 PyTorch 환경을 변경 없이 재사용해 고정 1D CNN/LSTM 비교(`10`)를 완료하고 결과와 한계를 반영했다.
 - 2026-08-23: 새 학습 없이 `09`·`10` 예측을 재사용해 seed 반복 오류, block 집중도, 모델 간 오류 겹침과 정상 cycle 센서 차이 분석(`11`)을 완료했다.
 - 2026-08-23: 결과 확인 전에 동일 19개 센서 비교를 사전등록하고, Random Forest·1D CNN·정상-only LSTM Autoencoder의 9-block·3-seed 후속 비교(`12`)를 완료했다.
+- 2026-08-23: 수업 프로젝트의 성과와 과장 가능성, 학술연구에서 추가한 검증, 현재 한계와 최종 보고서 구조를 연구 종합 문서로 정리했다.

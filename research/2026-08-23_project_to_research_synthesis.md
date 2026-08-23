@@ -1,0 +1,230 @@
+# 기말 프로젝트에서 학술연구로의 확장 정리
+
+## 문서 목적
+
+이 문서는 기존 머신러닝 기말 프로젝트와 학술연구 확장 단계의 역할을 구분하고, 현재까지 실제로 얻은 결과와 한계를 한곳에 정리한다. 기존 보고서의 표현을 그대로 반복하지 않고, 현재 코드와 재실행 결과로 확인된 범위만 연구 결론으로 사용한다.
+
+## 한 문장 결론
+
+**기존 프로젝트는 row 단위 분석에서 Random Forest와 전류 계열 변수의 가능성을 찾았고, 후속 연구는 cycle 경계와 수집 block을 고려한 검증을 통해 짧은 센서 시계열을 통계 특징으로 정제한 Random Forest가 1D CNN과 정상-only LSTM Autoencoder보다 안정적임을 확인했다. 다만 현재 결과는 이상이 포함된 구간의 탐지이며, 독립적인 조기 고장 예측이나 실제 공정조건 식별을 증명한 것은 아니다.**
+
+## 1. 근거의 위계
+
+현재 연구에서는 자료의 역할을 다음과 같이 구분한다.
+
+1. `dataset/`, `notebooks/`, `reports/`: 수업 프로젝트의 원본 자료와 당시 분석 결과
+2. `research/00`-`12`: 후속 연구에서 실제로 실행한 재검증 코드
+3. `research/outputs/`: 현재 수치와 결론의 직접 근거
+4. 연구계획서와 방법론 메모: 실행 전 목표와 분석 기준
+
+원본 보고서의 수치는 당시 프로젝트 성과로 보존한다. 그러나 후속 연구와 분할 방식이나 평가 단위가 다른 수치를 현재 일반화 성능처럼 사용하지 않는다.
+
+## 2. 기존 기말 프로젝트가 수행한 범위
+
+| 태스크 | 질문 | 주요 방법 | 당시 핵심 결과 | 후속 연구에서 확인한 한계 |
+| --- | --- | --- | --- | --- |
+| Regression | 관절 센서로 `Tool_current`를 예측할 수 있는가? | Linear Regression, Random Forest, KNN | Random Forest `R²=0.5848`; `Tool_current`의 삼봉 분포와 비선형성 확인 | 시계열 일반화보다 row 단위 수치 예측에 초점을 둠. 상태 전환 문제를 직접 검증한 것은 아님 |
+| Classification | `System_Failure`를 분류할 수 있는가? | Logistic Regression, SVM, Decision Tree, Random Forest, KNN, SMOTE | Row random split에서 Random Forest Macro F1 약 `0.80`, ROC-AUC 약 `0.94` | 동일 cycle의 인접 row가 train/test에 섞일 수 있고, 통합 라벨이 고장 유형 차이를 가림 |
+| Clustering | 센서값으로 운영 상태를 나눌 수 있는가? | K-Means, DBSCAN, Hierarchical Clustering | 전류 7개 기반 K-Means `K=4`, Silhouette `0.3814`; 특정 군집의 Protective Stop 비율 `14.34%` | 군집 명칭은 사후 해석이며 실제 상태 정답이 아님. 고장과 같은 row에서의 연관성은 조기경고 증거가 아님 |
+
+### 기존 프로젝트에서 유지할 수 있는 발견
+
+- 데이터는 정상 약 93%, 고장 약 7%로 불균형하다.
+- 선형 모델보다 Random Forest가 당시 row-level 분류에서 더 높은 성능을 보였다.
+- 전류 계열 변수는 여러 분석에서 반복적으로 유용한 지표로 나타났다.
+- `Tool_current`와 관절 센서 관계는 단순한 선형 관계로 설명하기 어렵다.
+- 정적인 row 분석만으로는 시간에 따른 변화와 고장 전후의 순서를 구분할 수 없다.
+
+### 기존 표현에서 그대로 계승하면 안 되는 부분
+
+- Random row split의 높은 점수를 보지 못한 cycle이나 수집 session에 대한 성능으로 일반화하지 않는다.
+- Random Forest feature importance를 고장의 물리적 원인이나 인과관계로 해석하지 않는다.
+- K-Means 군집을 실제 `정상`, `과부하`, `그리퍼 하중`, `특수 궤적`의 정답 상태로 확정하지 않는다.
+- 군집과 고장이 같은 row에서 연관됐다는 사실을 고장 발생 전 경고 성능으로 표현하지 않는다.
+- 논문의 `workload`, `movement speed`, `gripping force`를 공개 CSV의 직접 feature나 알려진 cycle 라벨로 취급하지 않는다.
+- 논문의 RTDE 125 Hz 설명을 공개 CSV의 실제 저장 간격으로 사용하지 않는다. CSV의 양수 Timestamp 간격 중앙값은 약 1.005초다.
+
+## 3. 학술연구에서 변경한 분석 기준
+
+| 구분 | 기존 프로젝트 | 학술연구 확장 |
+| --- | --- | --- |
+| 주 태스크 | 회귀·분류·군집의 폭넓은 비교 | 센서 시계열 구간의 이상탐지에 집중 |
+| 평가 단위 | 개별 row | `cycle_run`과 acquisition block |
+| 시간 맥락 | 개별 시점 입력 | cycle 경계를 넘지 않는 5·10·20-step window |
+| 특징 표현 | 해당 시점 센서값과 파생변수 | mean, std, min, max, range, delta, slope 또는 raw sequence |
+| 타깃 | 통합 `System_Failure` 중심 | 통합 타깃과 `ProtectiveStop`, `GripLost` 개별 분석 |
+| 분할 | Row random stratified split | cycle-group split과 9개 block held-out 평가 |
+| 평가 | Row-level F1, ROC-AUC 중심 | Event cycle recall, 정상 cycle 오경보율, PR-AUC, block 최악값 |
+| 딥러닝 | 향후 과제 | 1D CNN, LSTM 분류기, 정상-only LSTM Autoencoder 비교 |
+| 고장 전 예측 | 구분되지 않음 | First positive 이전 window만 쓰는 별도 pre-failure 실험 |
+
+`cycle_run`을 도입한 이유는 원본 `cycle` ID 224, 225, 226, 227, 229, 230, 231, 232, 233이 시간상 떨어진 두 시행 구간에 재등장하기 때문이다. 이를 합치면 실제로 이어지지 않은 구간을 하나의 cycle로 취급하거나 train/test group을 잘못 구성할 수 있다.
+
+## 4. 학술연구에서 실제로 얻은 결과
+
+### 4.1 시계열 구간 특징은 row baseline보다 유용했다
+
+Cycle-group 기준 `SMOTE + Random Forest` 비교 결과는 다음과 같다.
+
+| 타깃 | Row Macro F1 | Best window | Window Macro F1 | Row PR-AUC | Window PR-AUC |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `System_Failure` | 0.7901 | 5-step | 0.8166 | 0.6430 | 0.8613 |
+| `ProtectiveStop` | 0.8428 | 5-step | 0.8642 | 0.7409 | 0.9039 |
+| `GripLost` | 0.7623 | 10-step | 0.8412 | 0.5604 | 0.8493 |
+
+세 타깃 모두 Macro F1과 PR-AUC가 개선됐다. 이는 짧은 구간의 평균 수준뿐 아니라 변화량과 변동성이 row 한 시점보다 유용할 수 있음을 보여준다. Window 크기는 타깃별로 달랐으므로 하나의 길이가 모든 고장 유형에 최적이라고 결론 내리지는 않는다.
+
+### 4.2 엄격한 block 평가에서도 구간 탐지는 유지됐다
+
+9개 acquisition block을 하나씩 test로 제외한 10-step×19-sensor 동일 입력 비교에서 Random Forest의 2개 핵심 cycle 지표는 다음과 같다.
+
+| 타깃 | Event cycle recall | 정상 cycle 오경보율 | 가장 어려운 block의 recall |
+| --- | ---: | ---: | ---: |
+| `System_Failure` | 0.9770 | 0.0435 | 0.9500 |
+| `ProtectiveStop` | 0.9516 | 0.0286 | 0.5000 |
+| `GripLost` | 0.9231 | 0.0368 | 0.6667 |
+
+전체 평균은 높지만 `ProtectiveStop`과 `GripLost`의 block 최솟값은 낮다. 따라서 모든 수집 조건에서 동일하게 안정적이라고 주장하지 않는다.
+
+### 4.3 딥러닝이 기본 모델을 개선하지는 못했다
+
+| 타깃 | 모델 | Event cycle recall | 정상 cycle 오경보율 |
+| --- | --- | ---: | ---: |
+| `System_Failure` | Random Forest | 0.9770 | 0.0435 |
+|  | 1D CNN | 0.9770 | 0.1913 |
+|  | LSTM Autoencoder q95 | 0.0460 | 0.1304 |
+| `ProtectiveStop` | Random Forest | 0.9516 | 0.0286 |
+|  | 1D CNN | 0.9355 | 0.1929 |
+|  | LSTM Autoencoder q95 | 0.0645 | 0.1071 |
+| `GripLost` | Random Forest | 0.9231 | 0.0368 |
+|  | 1D CNN | 0.9231 | 0.2454 |
+|  | LSTM Autoencoder q95 | 0.0000 | 0.1227 |
+
+1D CNN은 event recall을 대체로 유지했지만 정상 cycle 오경보가 크게 늘었다. 정상 cycle만 학습한 LSTM Autoencoder는 q95에서 대부분의 event를 탐지하지 못했고, q90으로 낮춰도 결론이 바뀌지 않았다. 따라서 현재 데이터에서는 모델 복잡도를 높이는 것보다 짧은 시계열을 통계 특징으로 정제하는 방식이 더 안정적이다.
+
+### 4.4 구간 탐지와 고장 전 예측은 다른 태스크였다
+
+구간 탐지는 window 안에 이미 positive 상태가 포함될 수 있다. 이를 고장 전 예측과 분리하기 위해 first positive 이전의 데이터만 사용한 pre-failure 실험을 수행했다.
+
+- `GripLost`: 30회 반복 split에서 positive F1 평균 `0.3058`, 적어도 하나의 positive를 탐지한 split 비율 `0.9667`
+- `System_Failure`: positive F1 평균 `0.0920`
+- `ProtectiveStop`: positive F1 평균 `0.0867`
+
+`GripLost`에서 약한 사전 신호 가능성은 남았지만 절대 성능과 분산을 고려하면 실용적인 조기경고 모델을 확보했다고 볼 수 없다.
+
+### 4.5 공정조건은 공개 파일만으로 복원할 수 없었다
+
+논문에는 `workload`, `movement speed`, `gripping force`의 세 수준이 기술돼 있지만, 공개 CSV와 Excel에는 cycle-to-condition 대응표가 없다. 센서 기반 3-cluster도 실제 세 수준과 일치하지 않았고, 25-cycle block은 온도만으로 매우 잘 구분됐다. 이는 공정조건 차이와 thermal/session drift가 혼재할 가능성을 보여준다.
+
+따라서 현재 block은 일반화 성능을 시험하는 수집 구간 proxy로만 사용한다. 실제 공정조건 분류는 대응표를 확보하기 전까지 연구 결과에 포함하지 않는다.
+
+### 4.6 센서 패턴 해석은 탐색적 결과다
+
+오경보 window에서는 일부 전류·속도·온도·`Tool_current`의 수준 또는 변화 범위 차이가 반복됐다. 그러나 겹치는 window의 사후 기술통계이며 모델별 오류에 선택된 표본이다. 이를 feature importance, 통계적 독립 표본 검정, 물리적 인과관계로 확대하지 않는다.
+
+## 5. 이 확장이 학술연구로서 갖는 가치
+
+### 5.1 새 모델보다 평가 문제를 바로잡았다
+
+핵심 기여는 새로운 architecture 제안이 아니다. 시계열 데이터에서 무엇을 독립 표본으로 보고, 어느 경계를 넘지 않게 하며, 어떤 단위로 오경보를 계산할지를 명시했다. 이는 기존 row random split 결과가 답하지 못한 일반화 질문을 다룬다.
+
+### 5.2 성공과 실패를 같은 기준에서 비교했다
+
+동일한 19개 센서와 10-step, 동일한 9개 outer test block을 사용해 Random Forest, 1D CNN, LSTM Autoencoder를 비교했다. Autoencoder의 threshold와 해석 규칙은 결과 확인 전에 고정했다. 딥러닝이 열세였다는 결과도 변경하거나 제외하지 않았다.
+
+### 5.3 운영상 의미가 있는 지표를 추가했다
+
+겹치는 window의 평균 점수만으로 성능을 주장하지 않고, 실제 고장 cycle을 하나라도 잡았는지와 정상 cycle에서 경보가 누적되는지를 함께 계산했다. 이를 통해 1D CNN의 높은 recall 뒤에 정상 cycle 오경보 부담이 있음을 확인했다.
+
+### 5.4 기존 프로젝트의 강한 표현을 검증 가능한 주장으로 좁혔다
+
+후속 연구를 통해 다음과 같이 표현 범위를 조정할 수 있다.
+
+- `고장을 예측했다`보다 `이상이 포함된 센서 구간을 탐지했다`가 정확하다.
+- `전류가 고장의 원인이다`보다 `전류 기반 특징이 반복적으로 유용했다`가 정확하다.
+- `과부하 군집이 조기경고를 가능하게 한다`보다 `특정 전류 군집에서 Protective Stop이 더 자주 관찰됐다`가 정확하다.
+- `딥러닝으로 성능을 개선했다`가 아니라 `딥러닝이 기본 모델보다 불리한 조건을 확인했다`가 실제 결과다.
+
+## 6. 현재 연구의 한계
+
+1. 공개된 단일 UR3 CobotOps 수집자료만 사용했으며 외부 데이터 검증이 없다.
+2. 동일 센서 비교의 cycle-level 평가 표본은 202개다. 4,035개 겹치는 window를 독립 표본으로 볼 수 없다.
+3. Acquisition block은 실제 공정조건 라벨이 아니라 cycle 번호 기반 proxy다.
+4. Block/session 내부 상관과 thermal drift가 남아 있어 Wilson 신뢰구간만으로 모든 불확실성을 설명할 수 없다.
+5. Timestamp 간격이 완전히 균일하지 않아 일반적인 고주파 시계열로 가정할 수 없다.
+6. 구간 탐지의 positive window에는 이미 발생한 이상 상태가 포함될 수 있다.
+7. Pre-failure positive 표본이 적어 `ProtectiveStop`과 통합 `System_Failure`의 사전 예측 근거가 약하다.
+8. Autoencoder calibration 정상 cycle은 fold별 13-36개로 quantile 임계값의 해상도가 제한된다.
+9. Hyperparameter는 최소 비교 범위로 사전 고정했으며 광범위한 architecture 탐색이나 통계적 최적화를 수행하지 않았다.
+10. Random Forest는 `random_state=42`의 고정 1회이고 딥러닝은 3개 seed consensus다. 딥러닝 초기화 변동은 확인했지만 Random Forest의 seed 변동은 반복 평가하지 않았다.
+11. Random Forest feature importance와 오류 window의 센서 차이는 인과관계가 아니다.
+12. 기존 Logistic Regression과 SVM은 수업 프로젝트에서 실행됐지만, 현재 19-sensor·9-block 동일 조건에서는 다시 비교하지 않았다.
+13. 실제 로봇 환경의 실시간 지연, 연속 경보 정책, 새로운 고장 유형 대응은 검증하지 않았다.
+
+## 7. 연구계획서 이행 상태
+
+| 계획 항목 | 상태 | 현재 판단 |
+| --- | --- | --- |
+| 데이터 감사와 baseline 재현 | 완료 | UCI 원본 provenance와 결측·라벨·cycle 구조 확인 |
+| 시계열 구간 재구성과 특징 생성 | 완료 | 5·10·20-step과 7개 통계량 비교 |
+| Row와 시계열 구간 비교 | 완료 | 세 타깃에서 Macro F1·PR-AUC 개선 확인 |
+| 1D CNN 비교 | 완료 | 유사한 recall과 높은 오경보 확인 |
+| LSTM/GRU Autoencoder | 최소 범위 완료 | LSTM Autoencoder 1개를 정상-only 방식으로 검증; GRU는 추가하지 않음 |
+| 고장 유형별 분석 | 완료 | 통합·Protective Stop·GripLost 분리 |
+| 오탐·미탐 사례 분석 | 완료 | Seed 반복성, block 집중도, 모델 간 오류 겹침 분석 |
+| 센서 패턴 해석 | 부분 완료 | 기술통계 수준이며 인과·설명가능성 분석은 아님 |
+| 고장 전조 탐색 | 부분 완료 | GripLost에서 약한 가능성, 조기경고 성능은 미확립 |
+| 최종 보고서·발표자료 | 미완료 | 연구 종료 단계에서 작성할 산출물 |
+
+## 8. 최종 보고서에 사용할 연구 구조
+
+### 주 연구 질문
+
+> Cycle 및 수집 구간 경계를 보존한 UR3 센서 시계열에서, 짧은 구간의 통계 특징과 raw sequence 기반 모델은 이상 event 탐지와 정상 cycle 오경보 측면에서 어떤 차이를 보이는가?
+
+### 주 결과
+
+- 10-step×19-sensor 통계 특징 기반 `SMOTE + Random Forest`
+- 9개 block held-out 평가
+- Event cycle recall과 정상 cycle 오경보율
+
+### 비교 결과
+
+- 동일 raw sequence의 1D CNN
+- 정상-only LSTM Autoencoder
+- 딥러닝이 기본 모델을 개선하지 못한 이유와 오류 패턴
+
+### 부가 결과
+
+- `GripLost` 중심 pre-failure 가능성과 한계
+- 공정조건 대응표 부재 및 thermal/session drift 진단
+
+### 사용하지 않을 주장
+
+- 실시간 조기경고 시스템을 완성했다는 주장
+- 실제 1/2/3 kg, 60/80/100%, 80/100/120 N 조건을 복원했다는 주장
+- 딥러닝이 성능을 향상했다는 주장
+- 특정 센서가 고장의 원인이라는 주장
+- 현재 결과가 다른 로봇이나 공정에 바로 일반화된다는 주장
+
+## 9. 다음 최소 작업
+
+새 모델을 늘리기 전에 다음 순서가 적절하다.
+
+1. 공동연구자와 주 결과·비교 결과·부가 결과의 위계를 확정한다.
+2. 연구계획서의 지표 목록에 맞춰 저장된 prediction에서 confusion matrix와 ROC-AUC 최종 표를 추가할지 결정한다.
+3. 기존 Logistic Regression·SVM을 동일 19-sensor·9-block 조건으로 재실행할 필요가 있는지 결정한다.
+4. 최종 보고서에서는 원본 프로젝트 수치와 후속 연구 수치를 같은 표에서 직접 순위 비교하지 않는다.
+5. 외부 데이터나 cycle-to-condition 대응표를 확보할 때만 공정조건 분류 또는 외부 일반화 검증을 시작한다.
+
+## 직접 근거
+
+- 기존 프로젝트: `reports/머신러닝 최종 프로젝트 보고서.pdf`, `reports/Data_Classification_Task_Report.pdf`, `reports/Data_Clustering_Task_Report.pdf`
+- 기존 분할 코드: `notebooks/03_5_Classification_RandomForest.ipynb`
+- 데이터 감사와 baseline: `research/outputs/00_data_audit_report.md`, `research/outputs/01_baseline_results.md`
+- Window 비교: `research/outputs/02_row_vs_window_comparison.csv`
+- Pre-failure: `research/outputs/04_pre_failure_repeated_split_summary.csv`, `research/outputs/05_pre_failure_threshold_sensitivity_summary.csv`
+- 공정조건 진단: `research/outputs/06_process_condition_separability.md`
+- Block 및 event 평가: `research/outputs/08_block_held_out_robustness.md`, `research/outputs/09_event_level_block_validation.md`
+- Deep learning 및 오류 분석: `research/outputs/10_sequence_model_comparison.md`, `research/outputs/11_sequence_error_analysis.md`
+- 동일 센서 최종 비교: `research/2026-08-23_lstm_autoencoder_preregistration.md`, `research/outputs/12_matched_lstm_autoencoder_comparison.md`

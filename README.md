@@ -46,13 +46,13 @@ UR3_Cobot_ML/
 
 ### 2. Classification: "로봇 고장을 예측할 수 있는가?"
 * **목표**: 보호 정지(Protective Stop) 및 파지 상실(Grip Lost) 에러 발생 유무 이진 분류
-* **결과**: `Random Forest` + `SMOTE` 파이프라인으로 **F1-Macro Score 0.80, 오탐지(FP) 91% 감소** (LR 대비).
-* **인사이트**: 선형 모델(LR)의 한계를 비선형 앙상블로 극복. 피처 중요도 분석 결과, 온도나 속도가 아닌 **'전류(Current) 변수'가 고장 예측의 핵심 신호**임을 밝혀냄.
+* **수업 프로젝트 결과**: Row random split에서 `Random Forest` + `SMOTE` 파이프라인이 **F1-Macro Score 0.80, ROC-AUC 0.94**를 기록함.
+* **인사이트**: 선형 모델보다 비선형 앙상블이 유리했고, 전류 계열 변수가 feature importance 상위에 반복적으로 나타남. 이는 예측에 유용한 지표라는 뜻이며 고장의 인과적 원인으로 해석하지 않음.
 
 ### 3. Clustering: "로봇은 몇 가지 상태로 움직이는가?"
 * **목표**: 정답 라벨 없이 로봇의 운영 상태를 비지도 학습으로 군집화
-* **결과**: 전류 변수만을 활용한 `K-Means (K=4)` 모델이 로봇의 4가지 물리적 상태를 성공적으로 도출.
-* **인사이트**: 분류 태스크의 발견을 독립 검증함. 특히, 도출된 **'과부하 상태(Cluster 2)'에 실제 에러의 14.3%가 밀집**되어 있음을 규명하여, 비지도 학습 기반의 선제적 고장 감지 시스템의 실효성을 입증함.
+* **수업 프로젝트 결과**: 전류 변수만을 활용한 `K-Means (K=4)`가 Silhouette 0.3814를 기록했고, 특정 군집에서 Protective Stop 비율이 14.34%로 나타남.
+* **인사이트**: 전류 공간에 서로 다른 운영 regime이 존재할 가능성을 확인함. 군집 명칭은 사후 해석이고 실제 상태 정답이 아니므로, 이 결과만으로 선제적 고장 감지 성능이 입증된 것은 아님.
 
 <br>
 
@@ -65,9 +65,13 @@ UR3_Cobot_ML/
 
 ## 🔬 Research Extension
 
-후속 연구에서는 비연속적으로 재등장하는 cycle ID를 `cycle_run`으로 분리하고, 10-step 구간과 9개 acquisition block held-out 평가를 고정했습니다. 같은 구간을 통계 feature로 요약한 `SMOTE + Random Forest`와 raw sequence를 입력받는 소형 1D CNN·LSTM을 비교한 결과, deep learning 모델은 높은 event recall을 보였지만 정상 cycle 오경보가 더 많았습니다. 현재 공개 데이터 범위에서는 Random Forest가 더 균형 잡힌 기준선입니다.
+후속 연구에서는 비연속적으로 재등장하는 cycle ID를 `cycle_run`으로 분리하고, cycle 경계를 넘지 않는 시계열 window와 9개 acquisition block held-out 평가를 적용했습니다. 동일한 10-step×19-sensor 입력에서 통계 feature 기반 `SMOTE + Random Forest`, 1D CNN, 정상-only LSTM Autoencoder를 비교했습니다.
 
-세부 설계, 재현 명령, 결과 해석은 `research/README.md`와 `research/outputs/10_sequence_model_comparison.md`에 기록되어 있습니다.
+Random Forest의 event cycle recall은 `System_Failure` 0.9770, `ProtectiveStop` 0.9516, `GripLost` 0.9231이었고 정상 cycle 오경보율은 0.0286-0.0435였습니다. 1D CNN은 recall은 유사했지만 오경보율이 0.1913-0.2454로 증가했습니다. LSTM Autoencoder는 q95에서 event recall이 0-0.0645에 그쳐 현재 데이터에서는 Random Forest보다 불리했습니다.
+
+이 결과는 이상이 이미 포함된 구간의 탐지이며 조기 고장 예측을 뜻하지 않습니다. First positive 이전만 사용한 별도 실험에서는 `GripLost`의 약한 사전 신호 가능성만 확인됐습니다.
+
+기존 프로젝트와 연구 확장의 차이, 얻은 결과, 한계는 [연구 종합 문서](research/2026-08-23_project_to_research_synthesis.md)에 정리했습니다. 재현 명령과 현재 상태는 [연구 README](research/README.md), 동일 센서 비교 결과는 [최종 비교 결과](research/outputs/12_matched_lstm_autoencoder_comparison.md)에서 확인할 수 있습니다.
 
 <br>
 
