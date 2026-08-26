@@ -215,7 +215,8 @@ Logistic Regression의 높은 recall은 완전 정상 cycle의 27.0~53.0%와 다
 | 센서 패턴 해석 | 제한적 완료 | 오류 기술통계와 사전 고정 센서 그룹 ablation으로 예측 기여를 검증했으나 인과 분석은 아님 |
 | 기본 분류 모델 통제 비교 | 완료 | 동일 133개 특징에서 Logistic Regression·RBF SVM·Random Forest 비교 |
 | 고장 전조 탐색 | 부분 완료 | GripLost에서 약한 가능성, 조기경고 성능은 미확립 |
-| 최종 보고서·발표자료 | 미완료 | 연구 종료 단계에서 작성할 산출물 |
+| 최종 보고서 | 초안 완료 | 논문 형식 초안을 작성했고 핵심 수치·본문 122개 항목의 내부 대조를 완료함. 전체 재실행·공동 검토·최종 윤문은 남아 있음 |
+| 발표자료 | 미완료 | 보고서 내용 확정 후 별도 구성할 산출물 |
 
 ## 8. 최종 보고서에 사용할 연구 구조
 
@@ -252,15 +253,15 @@ Logistic Regression의 높은 recall은 완전 정상 cycle의 27.0~53.0%와 다
 
 ## 9. 다음 최소 작업
 
-새 모델을 늘리기 전에 다음 순서가 적절하다.
+새 모델을 늘리지 않고 제출 가능한 보고서로 확정하기 위해 다음 순서로 진행한다.
 
-1. 공동연구자와 주 결과·비교 결과·부가 결과의 위계를 확정한다.
-2. `13`의 최종 지표표, `14`의 센서 그룹 결과, `16`의 정정 경보 지표에서 보고서 본문 표와 그림을 선정한다.
-3. 기본 분류 모델 비교는 본문 통제 실험 또는 부록 중 어디에 둘지 결정한다.
-4. 현재 결과를 근거로 Logistic Regression·SVM의 Grid Search나 threshold tuning을 추가하지 않는다.
-5. `drop_tool_current`가 일부 지표에서 유리하더라도 결과 확인 후 주 기준선을 교체하지 않고 `all_19`를 공통 기준선으로 유지한다.
-6. 최종 보고서에서는 원본 프로젝트 수치와 후속 연구 수치를 같은 표에서 직접 순위 비교하지 않는다.
-7. 외부 데이터나 cycle-to-condition 대응표를 확보할 때만 공정조건 분류 또는 외부 일반화 검증을 시작한다.
+1. 공동연구자와 초안의 주 결과·직접 비교·보조 분석 위계를 확정한다.
+2. `13`·`14`·`16`에서 본문에 남길 표와 그림을 선정한다.
+3. 깨끗한 별도 worktree에서 CPU 파이프라인을 전체 재실행하고 결과를 대조한다.
+4. 외부 PyTorch 환경에서 딥러닝 3개 seed를 다시 실행해 cycle prediction과 핵심 지표를 대조한다.
+5. 내용 확정 후 수치와 기술 용어를 보존하면서 한국어 문장을 절별로 윤문한다.
+6. 참고문헌 형식을 통일하고 최종 PDF의 표·페이지·글꼴을 확인한다.
+7. 현재 결과를 근거로 추가 Grid Search, threshold tuning, 주 기준선 교체를 하지 않는다.
 
 ## 직접 근거
 
@@ -278,3 +279,6 @@ Logistic Regression의 높은 recall은 완전 정상 cycle의 27.0~53.0%와 다
 - 기본 분류 모델 비교: `research/2026-08-23_classical_model_comparison_preregistration.md`, `research/outputs/15_classical_model_comparison.md`, `research/outputs/15_classical_model_summary.csv`, `research/outputs/15_classical_model_paired_errors.csv`
 - Fault-context 경보 정정: `research/16_fault_context_alert_analysis.py`, `research/outputs/16_fault_context_alert_analysis.md`, `research/outputs/16_fault_context_alert_summary.csv`
 - 직접 관련 연구 및 방법론 참고: `research/2026-08-26_related_work_review.md`
+- 논문 형식 연구보고서 초안: `research/2026-08-27_research_report_draft.md`
+- 재현성 및 검토 계획: `research/2026-08-27_reproducibility_review_plan.md`
+- 보고서 수치 대조: `research/outputs/17_report_evidence_validation.md`

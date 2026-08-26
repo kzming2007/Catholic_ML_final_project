@@ -49,25 +49,29 @@
 - `15_classical_model_comparison_results.py`: 기존 Random Forest를 포함한 window·cycle·block 지표와 paired error 집계 코드
 - `16_fault_context_alert_analysis.py`: 기존 cycle 결과에서 완전 정상 오경보와 다른 고장에 대한 교차 경보를 분리하는 파생 분석 코드
 - `2026-08-26_related_work_review.md`: UR3 CobotOps 직접 활용 연구와 방법론 참고 논문의 근거 수준을 구분한 문헌 검토
+- `2026-08-27_research_report_draft.md`: 현재 결과와 한계를 논문 형식으로 정리한 연구보고서 초안
+- `2026-08-27_reproducibility_review_plan.md`: 내부 수치 대조, CPU·GPU 전체 재실행, 문체·출력 검토를 분리한 재현성 점검 계획
+- `17_report_evidence_validation.py`: 보고서 핵심 수치와 저장된 결과물의 일치 여부를 검사하는 코드
+- `run_report_validation.ps1`: 결과 재집계와 보고서 수치 대조를 한 번에 실행하는 스크립트
 - `requirements.txt`: 연구 스크립트를 실제 실행한 Python 패키지 버전
 - `EXPERIMENT_LOG.md`: 실제 실행한 실험의 시간순 기록
 - `outputs/`: 실행 결과 CSV/Markdown 저장 위치
 
 ## 현재 상태
 
-- 기준일: 2026-08-26
-- 완료: 데이터 감사, row-level baseline 재현, cycle_run 내부 window baseline, pre-failure baseline, 반복 split·threshold 검증, 공정조건 분리 가능성 진단, cycle_run 경계 재검증, acquisition block held-out 강건성 검증, 공통 10-step 사건 단위 기준선 검증, 고정 1D CNN/LSTM 비교, sequence model 오류 분석, 동일 19개 센서 기반 Random Forest·1D CNN·정상-only LSTM Autoencoder 비교, 최종 평가표 재집계, 사전 고정 센서 그룹 ablation, 동일 시계열 특징 기반 Logistic Regression·RBF SVM 비교, fault-context 경보 지표 정정, 직접 관련 연구 조사.
+- 기준일: 2026-08-27
+- 완료: 데이터 감사, row-level baseline 재현, cycle_run 내부 window baseline, pre-failure baseline, 반복 split·threshold 검증, 공정조건 분리 가능성 진단, cycle_run 경계 재검증, acquisition block held-out 강건성 검증, 공통 10-step 사건 단위 기준선 검증, 고정 1D CNN/LSTM 비교, sequence model 오류 분석, 동일 19개 센서 기반 Random Forest·1D CNN·정상-only LSTM Autoencoder 비교, 최종 평가표 재집계, 사전 고정 센서 그룹 ablation, 동일 시계열 특징 기반 Logistic Regression·RBF SVM 비교, fault-context 경보 지표 정정, 직접 관련 연구 조사, 논문 형식 연구보고서 초안, 보고서 핵심 수치·본문 내부 대조 122개 항목.
 - 현재 결론: 주 연구는 supervised 구간 단위 이상탐지로 둔다. 동일 19개 센서 Random Forest의 event cycle recall/완전 정상 cycle 오경보율은 `System_Failure` 0.9770/0.0435, `ProtectiveStop` 0.9516/0.0348, `GripLost` 0.9231/0.0174였다. 다른 고장만 발생한 cycle에 대한 교차 경보율은 `ProtectiveStop` 0.0000, `GripLost` 0.0833이었다. 1D CNN은 recall을 유지했지만 완전 정상 오경보율 0.1652~0.2087과 `GripLost` 교차 경보율 0.4375를 보였다. 정상-only LSTM Autoencoder q95는 recall 0~0.0645로 기준선보다 열세였다. 동일 통계 특징의 Logistic Regression은 recall 0.9677~1.0000이었지만 완전 정상 오경보율이 0.2696~0.5304였고, RBF SVM은 recall 0.9032~0.9540과 완전 정상 오경보율 0.0174~0.0957로 타깃별 trade-off가 나타났다. 따라서 시계열 통계 특징에는 기본 모델도 활용할 수 있는 신호가 있지만, 현재 평가에서는 Random Forest가 탐지와 경보 부담을 가장 안정적으로 균형화했다. 센서 그룹 ablation에서는 관절 전류 계열의 예측 기여를 확인했으나 전류 전체가 항상 또는 유일하게 핵심이라는 주장은 하지 않는다.
 - 막힌 점: 실제 공정조건 분류는 cycle-to-condition 정답표가 없어 검증할 수 없다. 이 제약은 시계열 이상탐지 연구 진행을 막지는 않는다.
 
 ## 다음 작업
 
-1. `2026-08-23_project_to_research_synthesis.md`와 `13`·`14` 결과를 기준으로 공동연구자와 주 결과·비교 결과·부가 결과의 위계를 확정한다.
-2. 최종 연구 서술은 동일 19개 센서 Random Forest를 공통 기준선으로 유지하고, 센서 그룹 ablation은 해석 보조 결과로 둔다.
-3. 1D CNN과 정상-only LSTM Autoencoder는 딥러닝 비교군으로 보고하되, 성능 열세와 정상 분포 가정의 실패를 그대로 해석한다.
-4. Pre-failure 결과(`03`-`05`)는 `GripLost`의 약한 사전 신호를 확인한 제한적 탐색 결과로 분리한다.
-5. 이번 ablation 결과를 본 뒤 `drop_tool_current`를 새 주 모델로 교체하거나 threshold를 조정하지 않는다.
-6. Logistic Regression·SVM은 동일 조건 비교를 완료했으므로 추가 Grid Search, kernel 또는 threshold 탐색 없이 최종 보고서의 기본 모델 통제 결과로 사용한다.
+1. 공동연구자와 보고서의 주 결과·직접 비교·보조 분석 위계와 본문에 넣을 표를 확정한다.
+2. 깨끗한 별도 worktree에서 CPU 전체 파이프라인을 다시 실행하고 저장 결과와 대조한다.
+3. 기존 외부 PyTorch 환경에서 3개 seed의 딥러닝 학습을 다시 실행해 cycle prediction과 핵심 지표를 대조한다.
+4. 내용 확정 후 수치·용어를 보존하면서 한국어 문장을 절별로 윤문한다.
+5. 참고문헌 형식을 통일하고 제출 양식에 맞춘 PDF에서 표 잘림, 페이지 넘김, 글꼴을 확인한다.
+6. 새 모델, 추가 tuning, threshold 변경은 현재 보고서의 필수 작업에 포함하지 않는다.
 
 ## 실행 순서
 
@@ -95,6 +99,13 @@ python -X utf8 research\14_sensor_group_ablation_results.py
 python -X utf8 research\15_classical_model_comparison.py
 python -X utf8 research\15_classical_model_comparison_results.py
 python -X utf8 research\16_fault_context_alert_analysis.py
+python -X utf8 research\17_report_evidence_validation.py
+```
+
+보고서 수치만 다시 집계하고 대조할 때는 다음 스크립트를 사용한다.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File research\run_report_validation.ps1
 ```
 
 ## 데이터 provenance 및 실행 환경
@@ -161,11 +172,12 @@ python -X utf8 research\16_fault_context_alert_analysis.py
 - Fault-context 경보 정정: `research/16_fault_context_alert_analysis.py`, `research/outputs/16_fault_context_alert_analysis.md`, `research/outputs/16_fault_context_alert_summary.csv`, `research/outputs/16_fault_context_cycle_results.csv`
 - 관련 연구 검토: `research/2026-08-26_related_work_review.md`
 - 연구 종합: `research/2026-08-23_project_to_research_synthesis.md`
+- 연구보고서 초안과 검증: `research/2026-08-27_research_report_draft.md`, `research/2026-08-27_reproducibility_review_plan.md`, `research/outputs/17_report_evidence_validation.md`
 - 관련 메모: `research/2026-07-08_time_series_method_decision.md`
 
 ## 열린 질문
 
-- 최종 보고서에서 supervised 구간 단위 이상탐지를 주 연구 질문으로 두고, 정상-only Autoencoder의 부정적 결과를 어느 수준까지 설명할지 공동연구자와 합의해야 한다.
+- 보고서 초안의 supervised 구간 단위 이상탐지 중심 구조와 정상-only Autoencoder의 부정적 결과 서술 범위를 공동연구자와 합의해야 한다.
 - pre-failure를 `GripLost` 중심의 제한적 부가 분석으로 둘지 합의해야 한다.
 - `GripLost` pre-failure threshold 0.30을 후속 검증 후보로 유지할지 정해야 한다.
 - 공정조건 분류는 대응표를 확보하지 않는 한 연구 범위에 포함하지 않는다.
@@ -187,3 +199,4 @@ python -X utf8 research\16_fault_context_alert_analysis.py
 - 2026-08-23: 결과 확인 전에 센서 그룹 비교를 사전등록하고, 동일 Random Forest 조건의 10개 입력 변형·270회 block 평가(`14`)를 완료했다.
 - 2026-08-23: 결과 확인 전에 기본 분류 모델 비교를 사전등록하고, 동일 133개 시계열 특징에서 Logistic Regression·RBF SVM의 54회 block 평가(`15`)를 완료했다.
 - 2026-08-26: 기존 `12`·`14`·`15` cycle 결과를 재학습 없이 재집계해 완전 정상 오경보와 교차 고장 경보를 분리(`16`)하고, UR3 CobotOps 직접 활용 연구와 방법론 참고 논문을 검토했다.
+- 2026-08-27: 논문 형식 연구보고서 초안을 작성하고, 저장 결과와 본문 핵심 수치·문장 122개 항목의 내부 일치 여부를 검증했다. 전체 CPU·GPU 재실행과 최종 윤문·출력 검토는 후속 단계로 분리했다.
