@@ -47,15 +47,17 @@
 - `2026-08-23_classical_model_comparison_preregistration.md`: 동일 시계열 특징 기반 기본 분류 모델 비교 조건을 결과 확인 전에 고정한 문서
 - `15_classical_model_comparison.py`: Logistic Regression과 RBF SVM의 9-block held-out 실행 코드
 - `15_classical_model_comparison_results.py`: 기존 Random Forest를 포함한 window·cycle·block 지표와 paired error 집계 코드
+- `16_fault_context_alert_analysis.py`: 기존 cycle 결과에서 완전 정상 오경보와 다른 고장에 대한 교차 경보를 분리하는 파생 분석 코드
+- `2026-08-26_related_work_review.md`: UR3 CobotOps 직접 활용 연구와 방법론 참고 논문의 근거 수준을 구분한 문헌 검토
 - `requirements.txt`: 연구 스크립트를 실제 실행한 Python 패키지 버전
 - `EXPERIMENT_LOG.md`: 실제 실행한 실험의 시간순 기록
 - `outputs/`: 실행 결과 CSV/Markdown 저장 위치
 
 ## 현재 상태
 
-- 기준일: 2026-08-23
-- 완료: 데이터 감사, row-level baseline 재현, cycle_run 내부 window baseline, pre-failure baseline, 반복 split·threshold 검증, 공정조건 분리 가능성 진단, cycle_run 경계 재검증, acquisition block held-out 강건성 검증, 공통 10-step 사건 단위 기준선 검증, 고정 1D CNN/LSTM 비교, sequence model 오류 분석, 동일 19개 센서 기반 Random Forest·1D CNN·정상-only LSTM Autoencoder 비교, 최종 평가표 재집계, 사전 고정 센서 그룹 ablation, 동일 시계열 특징 기반 Logistic Regression·RBF SVM 비교.
-- 현재 결론: 주 연구는 supervised 구간 단위 이상탐지로 둔다. 동일 19개 센서 비교에서 Random Forest의 event cycle recall/정상 cycle 오경보율은 `System_Failure` 0.9770/0.0435, `ProtectiveStop` 0.9516/0.0286, `GripLost` 0.9231/0.0368이었다. 1D CNN은 recall 0.9231~0.9770을 유지했지만 오경보율이 0.1913~0.2454로 증가했고, 정상-only LSTM Autoencoder q95는 recall 0~0.0645로 기준선보다 열세였다. 동일 통계 특징의 Logistic Regression은 recall 0.9677~1.0000이었지만 정상 cycle 오경보율이 0.2714~0.5304였고, RBF SVM은 recall 0.9032~0.9540과 오경보율 0.0214~0.1779로 타깃별 trade-off가 나타났다. 따라서 시계열 통계 특징에는 기본 모델도 활용할 수 있는 신호가 있지만, 현재 평가에서는 Random Forest가 탐지와 오경보를 가장 안정적으로 균형화했다. 센서 그룹 ablation에서는 관절 전류 계열의 예측 기여를 확인했으나 전류 전체가 항상 또는 유일하게 핵심이라는 주장은 하지 않는다.
+- 기준일: 2026-08-26
+- 완료: 데이터 감사, row-level baseline 재현, cycle_run 내부 window baseline, pre-failure baseline, 반복 split·threshold 검증, 공정조건 분리 가능성 진단, cycle_run 경계 재검증, acquisition block held-out 강건성 검증, 공통 10-step 사건 단위 기준선 검증, 고정 1D CNN/LSTM 비교, sequence model 오류 분석, 동일 19개 센서 기반 Random Forest·1D CNN·정상-only LSTM Autoencoder 비교, 최종 평가표 재집계, 사전 고정 센서 그룹 ablation, 동일 시계열 특징 기반 Logistic Regression·RBF SVM 비교, fault-context 경보 지표 정정, 직접 관련 연구 조사.
+- 현재 결론: 주 연구는 supervised 구간 단위 이상탐지로 둔다. 동일 19개 센서 Random Forest의 event cycle recall/완전 정상 cycle 오경보율은 `System_Failure` 0.9770/0.0435, `ProtectiveStop` 0.9516/0.0348, `GripLost` 0.9231/0.0174였다. 다른 고장만 발생한 cycle에 대한 교차 경보율은 `ProtectiveStop` 0.0000, `GripLost` 0.0833이었다. 1D CNN은 recall을 유지했지만 완전 정상 오경보율 0.1652~0.2087과 `GripLost` 교차 경보율 0.4375를 보였다. 정상-only LSTM Autoencoder q95는 recall 0~0.0645로 기준선보다 열세였다. 동일 통계 특징의 Logistic Regression은 recall 0.9677~1.0000이었지만 완전 정상 오경보율이 0.2696~0.5304였고, RBF SVM은 recall 0.9032~0.9540과 완전 정상 오경보율 0.0174~0.0957로 타깃별 trade-off가 나타났다. 따라서 시계열 통계 특징에는 기본 모델도 활용할 수 있는 신호가 있지만, 현재 평가에서는 Random Forest가 탐지와 경보 부담을 가장 안정적으로 균형화했다. 센서 그룹 ablation에서는 관절 전류 계열의 예측 기여를 확인했으나 전류 전체가 항상 또는 유일하게 핵심이라는 주장은 하지 않는다.
 - 막힌 점: 실제 공정조건 분류는 cycle-to-condition 정답표가 없어 검증할 수 없다. 이 제약은 시계열 이상탐지 연구 진행을 막지는 않는다.
 
 ## 다음 작업
@@ -92,6 +94,7 @@ python -X utf8 research\14_sensor_group_ablation.py
 python -X utf8 research\14_sensor_group_ablation_results.py
 python -X utf8 research\15_classical_model_comparison.py
 python -X utf8 research\15_classical_model_comparison_results.py
+python -X utf8 research\16_fault_context_alert_analysis.py
 ```
 
 ## 데이터 provenance 및 실행 환경
@@ -121,7 +124,8 @@ python -X utf8 research\15_classical_model_comparison_results.py
 - `05` threshold 조정은 recall 개선 가능성을 보지만, false positive 부담이 함께 증가하므로 최종 성능 주장으로 바로 쓰지 않는다.
 - `08`은 구간 단위 이상탐지에서 9개 acquisition block 모두 positive를 잡았지만, 이미 이상이 포함된 window 탐지이므로 pre-failure 결과로 해석하지 않는다.
 - `09`의 event cycle 탐지는 실제 positive가 포함된 window에서의 탐지 여부이며, 고장 전 경고 성능이 아니다.
-- `09`의 정상 cycle 오경보율은 겹치는 window의 false positive가 cycle 단위 경보로 누적되는 운영상 부담을 나타낸다.
+- `09`~`15`에서 `normal_cycle_false_alarm_rate`로 저장된 값은 target이 없는 모든 cycle을 분모로 사용한다. 개별 target에서는 다른 고장만 발생한 cycle도 포함되므로 정확한 명칭은 `target-negative 경보율`이다.
+- `16`은 기존 prediction을 바꾸지 않고 완전 정상 cycle 오경보율과 다른 고장만 있는 cycle의 교차 고장 경보율을 분리했다. 이후 최종 서술은 이 정정 지표를 우선한다.
 - temperature 제거는 `System_Failure`에서 개선됐지만 target별 효과가 일관되지는 않아 ablation 결과를 함께 보고한다.
 - `10`의 Random Forest는 10-step을 182개 통계 feature로 요약하고, 1D CNN/LSTM은 같은 구간을 10×26 순서 입력으로 사용한다.
 - `10`의 deep learning 결과는 seed 3개 평균이며, Random Forest는 `09`의 고정 1회 prediction을 재사용한다.
@@ -138,7 +142,7 @@ python -X utf8 research\15_classical_model_comparison_results.py
 - `14`의 센서 제거·단독 사용은 feature 차원과 SMOTE 공간도 함께 바꾸므로 센서의 인과적 효과를 증명하지 않는다.
 - `Tool_current`는 세 타깃에서 일관되게 유용하지 않았고, 온도 단독 탐지력은 낮지만 온도 제거 후 일부 정상 cycle 오경보가 증가했다.
 - `15`는 Logistic Regression과 RBF SVM에만 학습 fold 내부 표준화를 적용했다. 거리·계수 기반 모델에 필요한 전처리 차이이며 입력 window와 133개 특징, SMOTE, test block은 같다.
-- Logistic Regression의 높은 event recall은 정상 cycle 27.14~53.04% 오경보와 함께 나타났으므로 우수한 탐지기로 단독 해석하지 않는다.
+- Logistic Regression의 높은 event recall은 완전 정상 cycle 26.96~53.04% 오경보와 함께 나타났으므로 우수한 탐지기로 단독 해석하지 않는다.
 - RBF SVM은 `ProtectiveStop`에서 Random Forest보다 오경보 cycle이 1개 적었지만 event cycle을 3개 더 놓쳤다. 타깃별 trade-off이며 전체 우위가 아니다.
 - `15`는 고정 `C=1`, RBF `gamma=scale`, threshold 0.50의 최소 비교다. 현재 결과를 본 뒤 모델별 tuning을 추가하지 않는다.
 
@@ -154,6 +158,8 @@ python -X utf8 research\15_classical_model_comparison_results.py
 - 최종 평가표: `research/outputs/13_final_evaluation_tables.md`, `research/outputs/13_cycle_consensus_confusion_metrics.csv`
 - 센서 그룹 ablation: `research/2026-08-23_sensor_group_ablation_preregistration.md`, `research/outputs/14_sensor_group_ablation.md`, `research/outputs/14_sensor_group_ablation_summary.csv`, `research/outputs/14_sensor_group_ablation_paired_errors.csv`
 - 기본 분류 모델 비교: `research/2026-08-23_classical_model_comparison_preregistration.md`, `research/outputs/15_classical_model_comparison.md`, `research/outputs/15_classical_model_summary.csv`, `research/outputs/15_classical_model_paired_errors.csv`
+- Fault-context 경보 정정: `research/16_fault_context_alert_analysis.py`, `research/outputs/16_fault_context_alert_analysis.md`, `research/outputs/16_fault_context_alert_summary.csv`, `research/outputs/16_fault_context_cycle_results.csv`
+- 관련 연구 검토: `research/2026-08-26_related_work_review.md`
 - 연구 종합: `research/2026-08-23_project_to_research_synthesis.md`
 - 관련 메모: `research/2026-07-08_time_series_method_decision.md`
 
@@ -180,3 +186,4 @@ python -X utf8 research\15_classical_model_comparison_results.py
 - 2026-08-23: 저장된 prediction에서 최종 confusion matrix와 ROC-AUC·PR-AUC 표(`13`)를 재집계했다.
 - 2026-08-23: 결과 확인 전에 센서 그룹 비교를 사전등록하고, 동일 Random Forest 조건의 10개 입력 변형·270회 block 평가(`14`)를 완료했다.
 - 2026-08-23: 결과 확인 전에 기본 분류 모델 비교를 사전등록하고, 동일 133개 시계열 특징에서 Logistic Regression·RBF SVM의 54회 block 평가(`15`)를 완료했다.
+- 2026-08-26: 기존 `12`·`14`·`15` cycle 결과를 재학습 없이 재집계해 완전 정상 오경보와 교차 고장 경보를 분리(`16`)하고, UR3 CobotOps 직접 활용 연구와 방법론 참고 논문을 검토했다.

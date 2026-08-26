@@ -67,15 +67,15 @@ UR3_Cobot_ML/
 
 후속 연구에서는 비연속적으로 재등장하는 cycle ID를 `cycle_run`으로 분리하고, cycle 경계를 넘지 않는 시계열 window와 9개 acquisition block held-out 평가를 적용했습니다. 동일한 10-step×19-sensor 입력에서 통계 feature 기반 `SMOTE + Random Forest`, 1D CNN, 정상-only LSTM Autoencoder를 비교했습니다.
 
-Random Forest의 event cycle recall은 `System_Failure` 0.9770, `ProtectiveStop` 0.9516, `GripLost` 0.9231이었고 정상 cycle 오경보율은 0.0286-0.0435였습니다. 1D CNN은 recall은 유사했지만 오경보율이 0.1913-0.2454로 증가했습니다. LSTM Autoencoder는 q95에서 event recall이 0-0.0645에 그쳐 현재 데이터에서는 Random Forest보다 불리했습니다.
+Random Forest의 event cycle recall은 `System_Failure` 0.9770, `ProtectiveStop` 0.9516, `GripLost` 0.9231이었고 완전 정상 cycle 오경보율은 0.0174-0.0435였습니다. `ProtectiveStop`과 `GripLost`의 다른 고장 cycle 교차 경보율은 각각 0.0000과 0.0833이었습니다. 1D CNN은 recall은 유사했지만 완전 정상 오경보율이 0.1652-0.2087로 증가했고 `GripLost` 교차 경보율도 0.4375였습니다. LSTM Autoencoder는 q95에서 event recall이 0-0.0645에 그쳐 현재 데이터에서는 Random Forest보다 불리했습니다.
 
 이 결과는 이상이 이미 포함된 구간의 탐지이며 조기 고장 예측을 뜻하지 않습니다. First positive 이전만 사용한 별도 실험에서는 `GripLost`의 약한 사전 신호 가능성만 확인됐습니다.
 
 사전 고정한 센서 그룹 ablation에서는 전류 계열 제거가 `System_Failure`와 `GripLost`의 event recall을 낮췄지만, `ProtectiveStop`에서는 recall 증가와 오경보 증가가 함께 나타났습니다. `Tool_current` 제거는 `System_Failure`와 `ProtectiveStop`에서 오히려 개선됐습니다. 따라서 관절 전류 특징의 예측 기여는 지지되지만, 모든 전류 센서가 항상 핵심이거나 고장의 원인이라는 주장은 지지되지 않습니다.
 
-같은 133개 시계열 통계 특징으로 기본 분류 모델도 비교했습니다. Logistic Regression은 event recall 0.9677-1.0000을 보였지만 정상 cycle 오경보율이 0.2714-0.5304로 높았습니다. RBF SVM은 타깃별 trade-off가 남았고, Random Forest가 세 타깃에서 높은 탐지율과 낮은 오경보를 가장 안정적으로 함께 유지했습니다.
+같은 133개 시계열 통계 특징으로 기본 분류 모델도 비교했습니다. Logistic Regression은 event recall 0.9677-1.0000을 보였지만 완전 정상 cycle 오경보율이 0.2696-0.5304로 높았습니다. RBF SVM은 타깃별 trade-off가 남았고, Random Forest가 세 타깃에서 높은 탐지율과 낮은 경보 부담을 가장 안정적으로 함께 유지했습니다.
 
-기존 프로젝트와 연구 확장의 차이, 얻은 결과, 한계는 [연구 종합 문서](research/2026-08-23_project_to_research_synthesis.md)에 정리했습니다. 재현 명령과 현재 상태는 [연구 README](research/README.md), 동일 센서 비교 결과는 [최종 비교 결과](research/outputs/12_matched_lstm_autoencoder_comparison.md), 센서별 해석 근거는 [센서 그룹 ablation 결과](research/outputs/14_sensor_group_ablation.md), 기본 모델 통제 결과는 [기본 분류 모델 비교](research/outputs/15_classical_model_comparison.md)에서 확인할 수 있습니다.
+기존 프로젝트와 연구 확장의 차이, 얻은 결과, 한계는 [연구 종합 문서](research/2026-08-23_project_to_research_synthesis.md)에 정리했습니다. 재현 명령과 현재 상태는 [연구 README](research/README.md), 동일 센서 비교 결과는 [최종 비교 결과](research/outputs/12_matched_lstm_autoencoder_comparison.md), 센서별 해석 근거는 [센서 그룹 ablation 결과](research/outputs/14_sensor_group_ablation.md), 기본 모델 통제 결과는 [기본 분류 모델 비교](research/outputs/15_classical_model_comparison.md), 정정한 경보 지표는 [fault-context 분석](research/outputs/16_fault_context_alert_analysis.md)에서 확인할 수 있습니다.
 
 <br>
 

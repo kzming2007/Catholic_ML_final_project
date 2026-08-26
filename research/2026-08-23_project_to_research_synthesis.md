@@ -54,7 +54,7 @@
 | 특징 표현 | 해당 시점 센서값과 파생변수 | mean, std, min, max, range, delta, slope 또는 raw sequence |
 | 타깃 | 통합 `System_Failure` 중심 | 통합 타깃과 `ProtectiveStop`, `GripLost` 개별 분석 |
 | 분할 | Row random stratified split | cycle-group split과 9개 block held-out 평가 |
-| 평가 | Row-level F1, ROC-AUC 중심 | Event cycle recall, 정상 cycle 오경보율, PR-AUC, block 최악값 |
+| 평가 | Row-level F1, ROC-AUC 중심 | Event cycle recall, 완전 정상 오경보율, 교차 고장 경보율, PR-AUC, block 최악값 |
 | 딥러닝 | 향후 과제 | 1D CNN, LSTM 분류기, 정상-only LSTM Autoencoder 비교 |
 | 고장 전 예측 | 구분되지 않음 | First positive 이전 window만 쓰는 별도 pre-failure 실험 |
 
@@ -76,31 +76,31 @@ Cycle-group 기준 `SMOTE + Random Forest` 비교 결과는 다음과 같다.
 
 ### 4.2 엄격한 block 평가에서도 구간 탐지는 유지됐다
 
-9개 acquisition block을 하나씩 test로 제외한 10-step×19-sensor 동일 입력 비교에서 Random Forest의 2개 핵심 cycle 지표는 다음과 같다.
+9개 acquisition block을 하나씩 test로 제외한 10-step×19-sensor 동일 입력 비교에서 Random Forest의 핵심 cycle 지표는 다음과 같다. 기존 결과의 `normal_cycle_false_alarm_rate`는 해당 target이 없는 모든 cycle을 분모로 사용했으므로 아래에서는 `target-negative 경보율`로 바로잡았다.
 
-| 타깃 | Event cycle recall | 정상 cycle 오경보율 | 가장 어려운 block의 recall |
-| --- | ---: | ---: | ---: |
-| `System_Failure` | 0.9770 | 0.0435 | 0.9500 |
-| `ProtectiveStop` | 0.9516 | 0.0286 | 0.5000 |
-| `GripLost` | 0.9231 | 0.0368 | 0.6667 |
+| 타깃 | Event cycle recall | Target-negative 경보율 | 완전 정상 오경보율 | 교차 고장 경보율 | 가장 어려운 block의 recall |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `System_Failure` | 0.9770 | 0.0435 | 0.0435 | 해당 없음 | 0.9500 |
+| `ProtectiveStop` | 0.9516 | 0.0286 | 0.0348 | 0.0000 | 0.5000 |
+| `GripLost` | 0.9231 | 0.0368 | 0.0174 | 0.0833 | 0.6667 |
 
 전체 평균은 높지만 `ProtectiveStop`과 `GripLost`의 block 최솟값은 낮다. 따라서 모든 수집 조건에서 동일하게 안정적이라고 주장하지 않는다.
 
 ### 4.3 딥러닝이 기본 모델을 개선하지는 못했다
 
-| 타깃 | 모델 | Event cycle recall | 정상 cycle 오경보율 |
-| --- | --- | ---: | ---: |
-| `System_Failure` | Random Forest | 0.9770 | 0.0435 |
-|  | 1D CNN | 0.9770 | 0.1913 |
-|  | LSTM Autoencoder q95 | 0.0460 | 0.1304 |
-| `ProtectiveStop` | Random Forest | 0.9516 | 0.0286 |
-|  | 1D CNN | 0.9355 | 0.1929 |
-|  | LSTM Autoencoder q95 | 0.0645 | 0.1071 |
-| `GripLost` | Random Forest | 0.9231 | 0.0368 |
-|  | 1D CNN | 0.9231 | 0.2454 |
-|  | LSTM Autoencoder q95 | 0.0000 | 0.1227 |
+| 타깃 | 모델 | Event cycle recall | 완전 정상 오경보율 | 교차 고장 경보율 |
+| --- | --- | ---: | ---: | ---: |
+| `System_Failure` | Random Forest | 0.9770 | 0.0435 | 해당 없음 |
+|  | 1D CNN | 0.9770 | 0.1913 | 해당 없음 |
+|  | LSTM Autoencoder q95 | 0.0460 | 0.1304 | 해당 없음 |
+| `ProtectiveStop` | Random Forest | 0.9516 | 0.0348 | 0.0000 |
+|  | 1D CNN | 0.9355 | 0.2087 | 0.1200 |
+|  | LSTM Autoencoder q95 | 0.0645 | 0.1304 | 0.0000 |
+| `GripLost` | Random Forest | 0.9231 | 0.0174 | 0.0833 |
+|  | 1D CNN | 0.9231 | 0.1652 | 0.4375 |
+|  | LSTM Autoencoder q95 | 0.0000 | 0.1304 | 0.1042 |
 
-1D CNN은 event recall을 대체로 유지했지만 정상 cycle 오경보가 크게 늘었다. 정상 cycle만 학습한 LSTM Autoencoder는 q95에서 대부분의 event를 탐지하지 못했고, q90으로 낮춰도 결론이 바뀌지 않았다. 따라서 현재 데이터에서는 모델 복잡도를 높이는 것보다 짧은 시계열을 통계 특징으로 정제하는 방식이 더 안정적이다.
+1D CNN은 event recall을 대체로 유지했지만 완전 정상 오경보가 크게 늘었고, 특히 `GripLost`에서는 다른 고장 cycle의 43.75%에도 경보했다. 정상 cycle만 학습한 LSTM Autoencoder는 q95에서 대부분의 event를 탐지하지 못했고, q90으로 낮춰도 결론이 바뀌지 않았다. 따라서 현재 데이터에서는 모델 복잡도를 높이는 것보다 짧은 시계열을 통계 특징으로 정제하는 방식이 더 안정적이다.
 
 ### 4.4 구간 탐지와 고장 전 예측은 다른 태스크였다
 
@@ -126,10 +126,10 @@ Cycle-group 기준 `SMOTE + Random Forest` 비교 결과는 다음과 같다.
 
 결과 확인 전에 센서 그룹 10개 변형과 해석 규칙을 고정하고, 동일한 10-step·9-block·Random Forest 조건에서 270회 평가했다. `all_19` 결과는 기존 `12` 기준선의 score와 prediction에 정확히 일치했다.
 
-- 전류 계열을 모두 제거하면 `System_Failure` event recall은 `0.9770`에서 `0.9310`으로 낮아지고 정상 cycle 오경보율은 `0.0435`에서 `0.1217`로 증가했다.
+- 전류 계열을 모두 제거하면 `System_Failure` event recall은 `0.9770`에서 `0.9310`으로 낮아지고 완전 정상 오경보율은 `0.0435`에서 `0.1217`로 증가했다.
 - `GripLost` event recall은 전류 계열 제거 시 `0.9231`에서 `0.4103`으로 크게 낮아졌다.
-- `ProtectiveStop`은 전류 계열 제거 시 recall이 `0.9516`에서 `0.9677`로 높아졌지만 오경보율도 `0.0286`에서 `0.0786`으로 증가해 tradeoff였다.
-- `Tool_current`만 제거하면 `System_Failure`와 `ProtectiveStop`은 recall이 소폭 높아지고 오경보율은 유지됐다. `GripLost`는 recall이 같고 오경보율이 `0.0368`에서 `0.0429`로 높아졌다.
+- `ProtectiveStop`은 전류 계열 제거 시 recall이 `0.9516`에서 `0.9677`로 높아졌지만, 완전 정상 오경보율 `0.0609`와 교차 고장 경보율 `0.1600`으로 tradeoff가 나타났다.
+- `Tool_current`만 제거하면 `System_Failure`와 `ProtectiveStop`은 recall이 소폭 높아지고 완전 정상 오경보율은 유지됐다. `GripLost`는 recall과 완전 정상 오경보율이 같았지만 교차 고장 경보율은 `0.0833`에서 `0.1042`로 높아졌다.
 - 속도 단독 입력은 높은 recall과 높은 오경보가 함께 나타났고, 온도 단독 입력은 세 타깃 모두 recall이 낮았다. 다만 온도 제거 후 일부 타깃의 오경보가 증가해 온도는 수집 구간 차이를 보정하는 데 기여했을 가능성이 있다.
 
 따라서 관절 전류 계열이 특히 `GripLost` 탐지에 기여한다는 해석은 지지되지만, 전류 전체가 항상 또는 유일하게 핵심이라는 결론은 지지되지 않는다. 이 결과는 센서 그룹의 예측 기여에 대한 제한적 검증이며 물리적 인과관계의 증거가 아니다.
@@ -138,19 +138,19 @@ Cycle-group 기준 `SMOTE + Random Forest` 비교 결과는 다음과 같다.
 
 동일한 133개 시계열 통계 특징과 9개 block-held-out 평가에서 Logistic Regression과 RBF SVM을 tuning 없이 비교했다. Random Forest의 고정 결과를 공통 기준선으로 재사용했다.
 
-| Target | 모델 | Event cycle recall | 정상 cycle 오경보율 |
-| --- | --- | ---: | ---: |
-| `System_Failure` | Random Forest | 0.9770 | 0.0435 |
-|  | Logistic Regression | 0.9885 | 0.5304 |
-|  | RBF SVM | 0.9540 | 0.0957 |
-| `ProtectiveStop` | Random Forest | 0.9516 | 0.0286 |
-|  | Logistic Regression | 0.9677 | 0.2714 |
-|  | RBF SVM | 0.9032 | 0.0214 |
-| `GripLost` | Random Forest | 0.9231 | 0.0368 |
-|  | Logistic Regression | 1.0000 | 0.4908 |
-|  | RBF SVM | 0.9487 | 0.1779 |
+| Target | 모델 | Event cycle recall | 완전 정상 오경보율 | 교차 고장 경보율 |
+| --- | --- | ---: | ---: | ---: |
+| `System_Failure` | Random Forest | 0.9770 | 0.0435 | 해당 없음 |
+|  | Logistic Regression | 0.9885 | 0.5304 | 해당 없음 |
+|  | RBF SVM | 0.9540 | 0.0957 | 해당 없음 |
+| `ProtectiveStop` | Random Forest | 0.9516 | 0.0348 | 0.0000 |
+|  | Logistic Regression | 0.9677 | 0.2696 | 0.2800 |
+|  | RBF SVM | 0.9032 | 0.0174 | 0.0400 |
+| `GripLost` | Random Forest | 0.9231 | 0.0174 | 0.0833 |
+|  | Logistic Regression | 1.0000 | 0.4522 | 0.5833 |
+|  | RBF SVM | 0.9487 | 0.0957 | 0.3750 |
 
-Logistic Regression의 높은 recall은 정상 cycle의 27.1~53.0%에 경보하는 결과와 함께 나타났다. 이는 통계 특징에 선형적으로 포착되는 이상 신호가 있지만 선형 경계만으로 정상 구간을 안정적으로 제외하지 못했음을 보여준다. RBF SVM은 Logistic Regression보다 오경보를 줄였지만 `System_Failure`에서는 Random Forest보다 두 지표가 모두 불리했고, 나머지 타깃에서는 recall과 오경보의 trade-off가 남았다. 현재 조건에서는 Random Forest의 비선형 분기와 특징 상호작용 처리가 추가적인 균형에 기여한 것으로 해석한다.
+Logistic Regression의 높은 recall은 완전 정상 cycle의 27.0~53.0%와 다른 고장 cycle의 28.0~58.3%에 경보하는 결과와 함께 나타났다. 이는 통계 특징에 선형적으로 포착되는 이상 신호가 있지만 선형 경계만으로 정상 구간과 고장 유형을 안정적으로 구분하지 못했음을 보여준다. RBF SVM은 Logistic Regression보다 경보를 줄였지만 `System_Failure`에서는 Random Forest보다 두 지표가 모두 불리했고, 나머지 타깃에서는 recall과 경보 부담의 trade-off가 남았다. 현재 조건에서는 Random Forest의 비선형 분기와 특징 상호작용 처리가 추가적인 균형에 기여한 것으로 해석한다.
 
 ## 5. 이 확장이 학술연구로서 갖는 가치
 
@@ -164,7 +164,7 @@ Logistic Regression의 높은 recall은 정상 cycle의 27.1~53.0%에 경보하�
 
 ### 5.3 운영상 의미가 있는 지표를 추가했다
 
-겹치는 window의 평균 점수만으로 성능을 주장하지 않고, 실제 고장 cycle을 하나라도 잡았는지와 정상 cycle에서 경보가 누적되는지를 함께 계산했다. 이를 통해 1D CNN의 높은 recall 뒤에 정상 cycle 오경보 부담이 있음을 확인했다.
+겹치는 window의 평균 점수만으로 성능을 주장하지 않고, 실제 고장 cycle을 하나라도 잡았는지와 완전 정상 cycle 및 다른 고장 cycle에서 경보가 누적되는지를 함께 계산했다. 이를 통해 1D CNN의 높은 recall 뒤에 완전 정상 오경보와 교차 고장 경보 부담이 있음을 확인했다.
 
 ### 5.4 기존 프로젝트의 강한 표현을 검증 가능한 주장으로 좁혔다
 
@@ -221,13 +221,13 @@ Logistic Regression의 높은 recall은 정상 cycle의 27.1~53.0%에 경보하�
 
 ### 주 연구 질문
 
-> Cycle 및 수집 구간 경계를 보존한 UR3 센서 시계열에서, 짧은 구간의 통계 특징과 raw sequence 기반 모델은 이상 event 탐지와 정상 cycle 오경보 측면에서 어떤 차이를 보이는가?
+> Cycle 및 수집 구간 경계를 보존한 UR3 센서 시계열에서, 짧은 구간의 통계 특징과 raw sequence 기반 모델은 이상 event 탐지, 완전 정상 오경보, 교차 고장 경보 측면에서 어떤 차이를 보이는가?
 
 ### 주 결과
 
 - 10-step×19-sensor 통계 특징 기반 `SMOTE + Random Forest`
 - 9개 block held-out 평가
-- Event cycle recall과 정상 cycle 오경보율
+- Event cycle recall, 완전 정상 cycle 오경보율, 교차 고장 경보율
 
 ### 비교 결과
 
@@ -255,7 +255,7 @@ Logistic Regression의 높은 recall은 정상 cycle의 27.1~53.0%에 경보하�
 새 모델을 늘리기 전에 다음 순서가 적절하다.
 
 1. 공동연구자와 주 결과·비교 결과·부가 결과의 위계를 확정한다.
-2. `13`의 최종 지표표와 `14`의 센서 그룹 결과에서 보고서 본문 표와 그림을 선정한다.
+2. `13`의 최종 지표표, `14`의 센서 그룹 결과, `16`의 정정 경보 지표에서 보고서 본문 표와 그림을 선정한다.
 3. 기본 분류 모델 비교는 본문 통제 실험 또는 부록 중 어디에 둘지 결정한다.
 4. 현재 결과를 근거로 Logistic Regression·SVM의 Grid Search나 threshold tuning을 추가하지 않는다.
 5. `drop_tool_current`가 일부 지표에서 유리하더라도 결과 확인 후 주 기준선을 교체하지 않고 `all_19`를 공통 기준선으로 유지한다.
@@ -276,3 +276,5 @@ Logistic Regression의 높은 recall은 정상 cycle의 27.1~53.0%에 경보하�
 - 최종 평가표: `research/outputs/13_final_evaluation_tables.md`, `research/outputs/13_cycle_consensus_confusion_metrics.csv`
 - 센서 그룹 ablation: `research/2026-08-23_sensor_group_ablation_preregistration.md`, `research/outputs/14_sensor_group_ablation.md`, `research/outputs/14_sensor_group_ablation_summary.csv`, `research/outputs/14_sensor_group_ablation_paired_errors.csv`
 - 기본 분류 모델 비교: `research/2026-08-23_classical_model_comparison_preregistration.md`, `research/outputs/15_classical_model_comparison.md`, `research/outputs/15_classical_model_summary.csv`, `research/outputs/15_classical_model_paired_errors.csv`
+- Fault-context 경보 정정: `research/16_fault_context_alert_analysis.py`, `research/outputs/16_fault_context_alert_analysis.md`, `research/outputs/16_fault_context_alert_summary.csv`
+- 직접 관련 연구 및 방법론 참고: `research/2026-08-26_related_work_review.md`
